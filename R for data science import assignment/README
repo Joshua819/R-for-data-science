@@ -1,0 +1,334 @@
+# R for Data Science: Data Import Assignment
+
+**Student:** Iradukunda Josue  
+**Course:** R for Data Science  
+**Project:** Importing Data from Statistical Packages, Database Management Systems, and Web APIs
+
+## 1. Project Overview
+
+This project demonstrates how to import, access, and work with data in R from different data sources. It covers statistical data formats, relational database management systems, and web APIs.
+
+The project uses R and RStudio to demonstrate practical data import techniques with SPSS, Stata, MySQL, SQLite, and a REST API.
+
+## 2. Project Objectives
+
+The main objectives of this assignment are to:
+
+- Import data from statistical packages such as SPSS and Stata.
+- Connect R to a MySQL database using XAMPP.
+- Create and access a SQLite database from R.
+- Retrieve data from a web API.
+- Explore imported datasets using R functions.
+- Execute SQL queries from R.
+- Demonstrate the use of R packages for data access and integration.
+
+
+### R packages
+
+| Package | Purpose |
+|---|---|
+| `haven` | Imports SPSS and Stata files |
+| `DBI` | Provides a common interface for database operations |
+| `RMariaDB` | Connects R to MySQL/MariaDB |
+| `RSQLite` | Connects R to SQLite databases |
+| `httr2` | Sends HTTP requests to web APIs |
+
+## 3. Project Structure
+
+```text
+r-data-science-data/
+├── README.md
+├── .gitignore
+├── R/
+│   ├── 01_import_spss.R
+│   ├── 02_import_stata.R
+│   ├── 03_import_mysql_xampp.R
+│   ├── 04_import_sqlite.R
+│   └── 05_import_api.R
+├── report/
+│   └── Assignment.tex
+|
+└── data/
+    └── README.md
+```
+
+The folder structure organizes the scripts, report, screenshots, and data documentation. Only include files and screenshots that actually exist in the repository.
+
+## 4. Importing Data from SPSS
+
+SPSS is a statistical software package that can save datasets in `.sav` format.
+
+In this project, the R package `haven` is used to import SPSS data.
+
+**Main functions:**
+
+- `read_sav()` — imports an SPSS dataset.
+- `head()` — displays the first rows.
+- `str()` — displays the structure of the dataset.
+- `dim()` — displays the number of rows and columns.
+- `summary()` — summarizes the dataset.
+
+Example:
+
+```r
+library(haven)
+
+data_spss <- read_sav("data/iris.sav")
+
+head(data_spss)
+str(data_spss)
+dim(data_spss)
+summary(data_spss)
+```
+
+**Note:** Place the actual SPSS file at `data/iris.sav`, or change the path to match your file location.
+
+## 5. Importing Data from Stata
+
+Stata is statistical software that commonly stores datasets in `.dta` format.
+
+The `haven` package can also import Stata datasets.
+
+**Main function:**
+
+- `read_dta()` — imports a Stata dataset into R.
+
+Example:
+
+```r
+library(haven)
+
+data_stata <- read_dta("data/iris.dta")
+
+head(data_stata)
+str(data_stata)
+dim(data_stata)
+summary(data_stata)
+```
+
+**Note:** Place the actual Stata file at `data/iris.dta`, or update the path accordingly.
+
+## 6. Importing Data from MySQL Using XAMPP
+
+This section demonstrates connecting R to a MySQL-compatible database running locally through XAMPP.
+
+The database used in this example is named `wpdbase`.
+
+**Packages used:**
+
+- `DBI`
+- `RMariaDB`
+
+**Main operations:**
+
+- Establish a database connection.
+- List tables in the database.
+- Import a table into R.
+- Execute SQL queries.
+- Disconnect from the database.
+
+Example:
+
+```r
+library(DBI)
+library(RMariaDB)
+
+con <- dbConnect(
+  RMariaDB::MariaDB(),
+  host = "127.0.0.1",
+  port = 3306,
+  dbname = "wpdbase",
+  user = "root",
+  password = ""
+)
+
+# List database tables
+dbListTables(con)
+
+# Import a table (replace 'your_table' with an actual table name)
+# imported_data <- dbReadTable(con, "your_table")
+#here is an example
+imported_data <- dbReadTable(con, "department")
+
+
+# Execute an SQL query
+# result <- dbGetQuery(con, "SELECT * FROM your_table LIMIT 10")
+#here is an example
+result <- dbGetQuery(con, "SELECT * FROM department LIMIT 10")
+
+# Disconnect from the database
+dbDisconnect(con)
+```
+
+**Important:**
+
+- Start MySQL from the XAMPP Control Panel before running the script.
+- Confirm that `wpdbase` exists and that the connection details match your local configuration.
+- Replace `your_table` with the name of an existing table.
+- If your database has a password, use your actual local password rather than assuming it is blank.
+- Never publish real passwords or sensitive database information on GitHub.
+
+## 7. Importing Data from SQLite
+
+SQLite is a lightweight relational database management system. Unlike MySQL, it does not require a separate database server. The database is stored in a file.
+
+This example creates a SQLite database file, writes sample student data to a table, imports the data into R, and runs an SQL query.
+
+**Packages used:**
+
+- `DBI`
+- `RSQLite`
+
+Example:
+
+```r
+library(DBI)
+library(RSQLite)
+
+# Connect to SQLite; create the file if it does not exist
+con <- dbConnect(
+  RSQLite::SQLite(),
+  "student_database.sqlite"
+)
+
+# Create sample data
+students <- data.frame(
+  student_id = c(1, 2, 3, 4, 5),
+  name = c("John", "Alice", "Peter", "Mary", "David"),
+  age = c(21, 22, 20, 23, 24),
+  course = c("IT", "Business", "IT", "Statistics", "IT")
+)
+
+# Save the data in SQLite
+dbWriteTable(
+  con,
+  "students",
+  students,
+  overwrite = TRUE
+)
+
+# List database tables
+dbListTables(con)
+
+# Import the table into R
+imported_students <- dbReadTable(con, "students")
+print(imported_students)
+
+# Query students studying IT
+it_students <- dbGetQuery(
+  con,
+  "SELECT * FROM students WHERE course = 'IT'"
+)
+
+print(it_students)
+
+# Disconnect
+dbDisconnect(con)
+```
+
+**Expected result:** The SQL query returns John, Peter, and David because their course is `IT`.
+
+The script creates `student_database.sqlite` in the current working directory if the file does not already exist.
+
+## 8. Importing Data from a Web API
+
+A web API allows applications to exchange data over the internet. Many REST APIs return data in JSON format.
+
+This project uses the JSONPlaceholder API, a public service that provides sample data for testing.
+
+**Package used:** `httr2`
+
+**API endpoint:** https://jsonplaceholder.typicode.com/posts
+
+Example:
+
+```r
+library(httr2)
+
+# Create an HTTP request
+request <- request(
+  "https://jsonplaceholder.typicode.com/posts"
+)
+
+# Send the request
+response <- req_perform(request)
+
+# Check the HTTP response status
+resp_status(response)
+
+# Convert the JSON response into an R data frame
+api_data <- resp_body_json(
+  response,
+  simplifyVector = TRUE
+)
+
+# Explore the imported data
+head(api_data)
+str(api_data)
+dim(api_data)
+summary(api_data)
+```
+
+**Expected result:** A successful request normally returns HTTP status `200`. The endpoint returns 100 sample posts, each containing fields such as `userId`, `id`, `title`, and `body`.
+
+An internet connection is required to run this example.
+
+## 9. Installing Required Packages
+
+Install the packages before running the scripts:
+
+```r
+install.packages(c(
+  "haven",
+  "DBI",
+  "RMariaDB",
+  "RSQLite",
+  "httr2"
+))
+```
+
+Installation is generally required only once per R library. After installation, load the relevant package in each script using `library()`.
+
+## 10. How to Run the Project
+
+1. Install R and RStudio.
+2. Download or clone this repository.
+3. Open the project folder in RStudio.
+4. Install the required packages.
+5. Run the SPSS and Stata scripts after providing the appropriate dataset files.
+6. Start MySQL in XAMPP and ensure the `wpdbase` database exists before running the MySQL script.
+7. Run the SQLite script to create the sample database and retrieve its data.
+8. Run the API script with an active internet connection.
+9. Review the output in the RStudio console.
+
+You can also run an individual script from the project root using:
+
+```r
+source("R/04_import_sqlite.R")
+```
+
+
+## 11. Conclusion
+
+This project demonstrates how R can import and work with data from multiple sources, including SPSS, Stata, MySQL, SQLite, and web APIs.
+
+The examples introduce essential data integration techniques such as reading statistical files, connecting to relational databases, executing SQL queries, and retrieving JSON data from a web service.
+
+These skills are useful in data science, statistical analysis, database management, and data analytics.
+
+## 12. References
+
+- R Project: https://www.r-project.org/
+- RStudio: https://posit.co/
+- Haven package: https://haven.tidyverse.org/
+- DBI package: https://dbi.r-dbi.org/
+- RMariaDB package: https://rmariadb.r-dbi.org/
+- RSQLite package: https://rsqlite.r-dbi.org/
+- httr2 package: https://httr2.r-lib.org/
+- SQLite: https://www.sqlite.org/
+- JSONPlaceholder API: https://jsonplaceholder.typicode.com/
+
+---
+
+**Author:** Iradukunda Josue  
+**Project:** R for Data Science — Data Import Assignment

@@ -1,0 +1,832 @@
+% Options for packages loaded elsewhere
+\PassOptionsToPackage{unicode}{hyperref}
+\PassOptionsToPackage{hyphens}{url}
+\documentclass[
+]{article}
+\usepackage{xcolor}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb}
+\setcounter{secnumdepth}{5}
+\usepackage{iftex}
+\ifPDFTeX
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{textcomp} % provide euro and other symbols
+\else % if luatex or xetex
+  \usepackage{unicode-math} % this also loads fontspec
+  \defaultfontfeatures{Scale=MatchLowercase}
+  \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
+\fi
+\usepackage{lmodern}
+\ifPDFTeX\else
+  % xetex/luatex font selection
+\fi
+% Use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\IfFileExists{microtype.sty}{% use microtype if available
+  \usepackage[]{microtype}
+  \UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\makeatletter
+\@ifundefined{KOMAClassName}{% if non-KOMA class
+  \IfFileExists{parskip.sty}{%
+    \usepackage{parskip}
+  }{% else
+    \setlength{\parindent}{0pt}
+    \setlength{\parskip}{6pt plus 2pt minus 1pt}}
+}{% if KOMA class
+  \KOMAoptions{parskip=half}}
+\makeatother
+\usepackage{color}
+\usepackage{fancyvrb}
+\newcommand{\VerbBar}{|}
+\newcommand{\VERB}{\Verb[commandchars=\\\{\}]}
+\DefineVerbatimEnvironment{Highlighting}{Verbatim}{commandchars=\\\{\}}
+% Add ',fontsize=\small' for more characters per line
+\usepackage{framed}
+\definecolor{shadecolor}{RGB}{248,248,248}
+\newenvironment{Shaded}{\begin{snugshade}}{\end{snugshade}}
+\newcommand{\AlertTok}[1]{\textcolor[rgb]{0.94,0.16,0.16}{#1}}
+\newcommand{\AnnotationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\AttributeTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{#1}}
+\newcommand{\BaseNTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\BuiltInTok}[1]{#1}
+\newcommand{\CharTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\CommentTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\CommentVarTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\ConstantTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{#1}}
+\newcommand{\ControlFlowTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\DataTypeTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{#1}}
+\newcommand{\DecValTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\DocumentationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\ErrorTok}[1]{\textcolor[rgb]{0.64,0.00,0.00}{\textbf{#1}}}
+\newcommand{\ExtensionTok}[1]{#1}
+\newcommand{\FloatTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\FunctionTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\ImportTok}[1]{#1}
+\newcommand{\InformationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\KeywordTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\NormalTok}[1]{#1}
+\newcommand{\OperatorTok}[1]{\textcolor[rgb]{0.81,0.36,0.00}{\textbf{#1}}}
+\newcommand{\OtherTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{#1}}
+\newcommand{\PreprocessorTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\RegionMarkerTok}[1]{#1}
+\newcommand{\SpecialCharTok}[1]{\textcolor[rgb]{0.81,0.36,0.00}{\textbf{#1}}}
+\newcommand{\SpecialStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\StringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\VariableTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\VerbatimStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\WarningTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\usepackage{longtable,booktabs,array}
+\newcounter{none} % for unnumbered tables
+\usepackage{calc} % for calculating minipage widths
+% Correct order of tables after \paragraph or \subparagraph
+\usepackage{etoolbox}
+\makeatletter
+\patchcmd\longtable{\par}{\if@noskipsec\mbox{}\fi\par}{}{}
+\makeatother
+% Allow footnotes in longtable head/foot
+\IfFileExists{footnotehyper.sty}{\usepackage{footnotehyper}}{\usepackage{footnote}}
+\makesavenoteenv{longtable}
+\usepackage{graphicx}
+\makeatletter
+\newsavebox\pandoc@box
+\newcommand*\pandocbounded[1]{% scales image to fit in text height/width
+  \sbox\pandoc@box{#1}%
+  \Gscale@div\@tempa{\textheight}{\dimexpr\ht\pandoc@box+\dp\pandoc@box\relax}%
+  \Gscale@div\@tempb{\linewidth}{\wd\pandoc@box}%
+  \ifdim\@tempb\p@<\@tempa\p@\let\@tempa\@tempb\fi% select the smaller of both
+  \ifdim\@tempa\p@<\p@\scalebox{\@tempa}{\usebox\pandoc@box}%
+  \else\usebox{\pandoc@box}%
+  \fi%
+}
+% Set default figure placement to htbp
+\def\fps@figure{htbp}
+\makeatother
+\setlength{\emergencystretch}{3em} % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\usepackage{bookmark}
+\IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
+\urlstyle{same}
+% fallback for those not using the hyperref driver hyperxmp:
+\makeatletter
+\@ifundefined{xmpquote}{\newcommand{\xmpquote}[1]{#1}}{}
+\makeatother
+\hypersetup{
+  pdftitle={Assignment: Data Importation Using R},
+  pdfauthor={Josue Iradukunda},
+  hidelinks,
+  pdfcreator={LaTeX via pandoc}}
+
+\title{Assignment: Data Importation Using R}
+\author{Josue Iradukunda}
+\date{2026-10-25}
+
+\begin{document}
+\maketitle
+
+{
+\setcounter{tocdepth}{2}
+\tableofcontents
+}
+\section{Introduction}\label{introduction}
+
+Data importation is an important part of data science because data can
+be stored in different formats and systems. R provides packages and
+functions for importing data from statistical software, relational
+databases, and web APIs.
+
+This assignment demonstrates five methods of data importation:
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  SPSS statistical files.
+\item
+  Stata statistical files.
+\item
+  SQLite databases.
+\item
+  MySQL databases using XAMPP.
+\item
+  Web APIs returning JSON data.
+\end{enumerate}
+
+The objective is to demonstrate how to import data into R, inspect its
+structure, display summary statistics, and execute SQL queries where
+applicable.
+
+\section{1. Importing Statistical Data from
+SPSS}\label{importing-statistical-data-from-spss}
+
+SPSS is statistical software that stores datasets in files with the
+\texttt{.sav} extension. The \texttt{haven} package allows R to read
+these files.
+
+\subsection{R code}\label{r-code}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{library}\NormalTok{(haven)}
+
+\CommentTok{\# Locate the sample SPSS file included with haven}
+\NormalTok{file\_path }\OtherTok{\textless{}{-}} \FunctionTok{system.file}\NormalTok{(}
+  \StringTok{"examples"}\NormalTok{,}
+  \StringTok{"iris.sav"}\NormalTok{,}
+  \AttributeTok{package =} \StringTok{"haven"}
+\NormalTok{)}
+
+\CommentTok{\# Check that the file exists}
+\ControlFlowTok{if}\NormalTok{ (file\_path }\SpecialCharTok{==} \StringTok{""}\NormalTok{) \{}
+  \FunctionTok{stop}\NormalTok{(}\StringTok{"The sample SPSS file was not found."}\NormalTok{)}
+\NormalTok{\}}
+
+\CommentTok{\# Import the SPSS dataset}
+\NormalTok{iris\_data }\OtherTok{\textless{}{-}} \FunctionTok{read\_sav}\NormalTok{(file\_path)}
+
+\CommentTok{\# Display the first ten rows}
+\FunctionTok{print}\NormalTok{(}\FunctionTok{head}\NormalTok{(iris\_data, }\DecValTok{10}\NormalTok{))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## # A tibble: 10 x 5
+##    Sepal.Length Sepal.Width Petal.Length Petal.Width Species   
+##           <dbl>       <dbl>        <dbl>       <dbl> <dbl+lbl> 
+##  1          5.1         3.5          1.4         0.2 1 [setosa]
+##  2          4.9         3            1.4         0.2 1 [setosa]
+##  3          4.7         3.2          1.3         0.2 1 [setosa]
+##  4          4.6         3.1          1.5         0.2 1 [setosa]
+##  5          5           3.6          1.4         0.2 1 [setosa]
+##  6          5.4         3.9          1.7         0.4 1 [setosa]
+##  7          4.6         3.4          1.4         0.3 1 [setosa]
+##  8          5           3.4          1.5         0.2 1 [setosa]
+##  9          4.4         2.9          1.4         0.2 1 [setosa]
+## 10          4.9         3.1          1.5         0.1 1 [setosa]
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# Display the structure}
+\FunctionTok{str}\NormalTok{(iris\_data)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## tibble [150 x 5] (S3: tbl_df/tbl/data.frame)
+##  $ Sepal.Length: num [1:150] 5.1 4.9 4.7 4.6 5 5.4 4.6 5 4.4 4.9 ...
+##   ..- attr(*, "format.spss")= chr "F8.2"
+##  $ Sepal.Width : num [1:150] 3.5 3 3.2 3.1 3.6 3.9 3.4 3.4 2.9 3.1 ...
+##   ..- attr(*, "format.spss")= chr "F8.2"
+##  $ Petal.Length: num [1:150] 1.4 1.4 1.3 1.5 1.4 1.7 1.4 1.5 1.4 1.5 ...
+##   ..- attr(*, "format.spss")= chr "F8.2"
+##  $ Petal.Width : num [1:150] 0.2 0.2 0.2 0.2 0.2 0.4 0.3 0.2 0.2 0.1 ...
+##   ..- attr(*, "format.spss")= chr "F8.2"
+##  $ Species     : dbl+lbl [1:150] 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, ...
+##    ..@ format.spss: chr "F8.0"
+##    ..@ labels     : Named num [1:3] 1 2 3
+##    .. ..- attr(*, "names")= chr [1:3] "setosa" "versicolor" "virginica"
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# Display the number of rows and columns}
+\FunctionTok{dim}\NormalTok{(iris\_data)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 150   5
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# Display summary statistics}
+\FunctionTok{summary}\NormalTok{(iris\_data)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##   Sepal.Length    Sepal.Width     Petal.Length    Petal.Width       Species 
+##  Min.   :4.300   Min.   :2.000   Min.   :1.000   Min.   :0.100   Min.   :1  
+##  1st Qu.:5.100   1st Qu.:2.800   1st Qu.:1.600   1st Qu.:0.300   1st Qu.:1  
+##  Median :5.800   Median :3.000   Median :4.350   Median :1.300   Median :2  
+##  Mean   :5.843   Mean   :3.057   Mean   :3.758   Mean   :1.199   Mean   :2  
+##  3rd Qu.:6.400   3rd Qu.:3.300   3rd Qu.:5.100   3rd Qu.:1.800   3rd Qu.:3  
+##  Max.   :7.900   Max.   :4.400   Max.   :6.900   Max.   :2.500   Max.   :3
+\end{verbatim}
+
+\subsection{Explanation}\label{explanation}
+
+The \texttt{read\_sav()} function imports an SPSS dataset into R. The
+\texttt{head()} function displays the first rows, \texttt{str()} shows
+the variables and their data types, \texttt{dim()} returns the number of
+rows and columns, and \texttt{summary()} provides descriptive
+statistics.
+
+\subsection{Result}\label{result}
+
+The dataset is imported into R and its contents, structure, dimensions,
+and summary statistics are displayed in the report.
+
+\section{2. Importing Statistical Data from
+Stata}\label{importing-statistical-data-from-stata}
+
+Stata is statistical software that stores datasets in files with the
+\texttt{.dta} extension. The \texttt{haven} package supports reading and
+writing Stata files.
+
+In this example, a small student dataset is created, exported to Stata
+format, and imported back into R.
+
+\subsection{R code}\label{r-code-1}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{library}\NormalTok{(haven)}
+
+\CommentTok{\# Create sample student data}
+\NormalTok{students }\OtherTok{\textless{}{-}} \FunctionTok{data.frame}\NormalTok{(}
+  \AttributeTok{Student\_ID =} \FunctionTok{c}\NormalTok{(}\DecValTok{1}\NormalTok{, }\DecValTok{2}\NormalTok{, }\DecValTok{3}\NormalTok{, }\DecValTok{4}\NormalTok{, }\DecValTok{5}\NormalTok{),}
+  \AttributeTok{Name =} \FunctionTok{c}\NormalTok{(}\StringTok{"Alice"}\NormalTok{, }\StringTok{"Bob"}\NormalTok{, }\StringTok{"Claudine"}\NormalTok{, }\StringTok{"David"}\NormalTok{, }\StringTok{"Eric"}\NormalTok{),}
+  \AttributeTok{Age =} \FunctionTok{c}\NormalTok{(}\DecValTok{21}\NormalTok{, }\DecValTok{23}\NormalTok{, }\DecValTok{22}\NormalTok{, }\DecValTok{24}\NormalTok{, }\DecValTok{20}\NormalTok{),}
+  \AttributeTok{Score =} \FunctionTok{c}\NormalTok{(}\DecValTok{85}\NormalTok{, }\DecValTok{78}\NormalTok{, }\DecValTok{92}\NormalTok{, }\DecValTok{88}\NormalTok{, }\DecValTok{75}\NormalTok{)}
+\NormalTok{)}
+
+\CommentTok{\# Export data to Stata format}
+\FunctionTok{write\_dta}\NormalTok{(students, }\StringTok{"students.dta"}\NormalTok{)}
+
+\CommentTok{\# Import the Stata dataset into R}
+\NormalTok{stata\_data }\OtherTok{\textless{}{-}} \FunctionTok{read\_dta}\NormalTok{(}\StringTok{"students.dta"}\NormalTok{)}
+
+\CommentTok{\# Display the imported data}
+\FunctionTok{print}\NormalTok{(stata\_data)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## # A tibble: 5 x 4
+##   Student_ID Name       Age Score
+##        <dbl> <chr>    <dbl> <dbl>
+## 1          1 Alice       21    85
+## 2          2 Bob         23    78
+## 3          3 Claudine    22    92
+## 4          4 David       24    88
+## 5          5 Eric        20    75
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# Display the structure}
+\FunctionTok{str}\NormalTok{(stata\_data)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## tibble [5 x 4] (S3: tbl_df/tbl/data.frame)
+##  $ Student_ID: num [1:5] 1 2 3 4 5
+##   ..- attr(*, "format.stata")= chr "%10.0g"
+##  $ Name      : chr [1:5] "Alice" "Bob" "Claudine" "David" ...
+##   ..- attr(*, "format.stata")= chr "%-9s"
+##  $ Age       : num [1:5] 21 23 22 24 20
+##   ..- attr(*, "format.stata")= chr "%10.0g"
+##  $ Score     : num [1:5] 85 78 92 88 75
+##   ..- attr(*, "format.stata")= chr "%10.0g"
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# Display the number of rows and columns}
+\FunctionTok{dim}\NormalTok{(stata\_data)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 5 4
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# Display summary statistics}
+\FunctionTok{summary}\NormalTok{(stata\_data)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##    Student_ID        Name        Age         Score     
+##  Min.   :1    Length   :5   Min.   :20   Min.   :75.0  
+##  1st Qu.:2    N.unique :5   1st Qu.:21   1st Qu.:78.0  
+##  Median :3    N.blank  :0   Median :22   Median :85.0  
+##  Mean   :3    Min.nchar:3   Mean   :22   Mean   :83.6  
+##  3rd Qu.:4    Max.nchar:8   3rd Qu.:23   3rd Qu.:88.0  
+##  Max.   :5                  Max.   :24   Max.   :92.0
+\end{verbatim}
+
+\subsection{Explanation}\label{explanation-1}
+
+The \texttt{write\_dta()} function saves the student dataset in Stata
+format. The \texttt{read\_dta()} function then imports the saved file
+into R.
+
+This demonstrates how R can exchange data with Stata-compatible files.
+
+\subsection{Result}\label{result-1}
+
+The imported dataset contains five students and four variables: student
+ID, name, age, and score.
+
+\section{3. Importing Data from
+SQLite}\label{importing-data-from-sqlite}
+
+SQLite is a relational database management system that stores its data
+in a database file. Unlike MySQL, it does not require a separate
+database server.
+
+The \texttt{DBI} and \texttt{RSQLite} packages are used to create the
+database, write data into a table, retrieve records, and execute SQL
+queries.
+
+\subsection{R code}\label{r-code-2}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{library}\NormalTok{(DBI)}
+\FunctionTok{library}\NormalTok{(RSQLite)}
+
+\CommentTok{\# Create or connect to the SQLite database}
+\NormalTok{con\_sqlite }\OtherTok{\textless{}{-}} \FunctionTok{dbConnect}\NormalTok{(}
+  \FunctionTok{SQLite}\NormalTok{(),}
+  \StringTok{"banking\_database.sqlite"}
+\NormalTok{)}
+
+\CommentTok{\# Create sample customer data}
+\NormalTok{customers }\OtherTok{\textless{}{-}} \FunctionTok{data.frame}\NormalTok{(}
+  \AttributeTok{customer\_id =} \FunctionTok{c}\NormalTok{(}\DecValTok{1}\NormalTok{, }\DecValTok{2}\NormalTok{, }\DecValTok{3}\NormalTok{, }\DecValTok{4}\NormalTok{),}
+  \AttributeTok{name =} \FunctionTok{c}\NormalTok{(}\StringTok{"Alice"}\NormalTok{, }\StringTok{"Bob"}\NormalTok{, }\StringTok{"Claudine"}\NormalTok{, }\StringTok{"David"}\NormalTok{),}
+  \AttributeTok{age =} \FunctionTok{c}\NormalTok{(}\DecValTok{25}\NormalTok{, }\DecValTok{30}\NormalTok{, }\DecValTok{28}\NormalTok{, }\DecValTok{35}\NormalTok{),}
+  \AttributeTok{balance =} \FunctionTok{c}\NormalTok{(}\DecValTok{1000}\NormalTok{, }\DecValTok{1500}\NormalTok{, }\DecValTok{20000}\NormalTok{, }\DecValTok{1200}\NormalTok{)}
+\NormalTok{)}
+
+\CommentTok{\# Write the data into a database table}
+\FunctionTok{dbWriteTable}\NormalTok{(}
+\NormalTok{  con\_sqlite,}
+  \StringTok{"customers"}\NormalTok{,}
+\NormalTok{  customers,}
+  \AttributeTok{overwrite =} \ConstantTok{TRUE}
+\NormalTok{)}
+
+\CommentTok{\# Display available tables}
+\FunctionTok{print}\NormalTok{(}\FunctionTok{dbListTables}\NormalTok{(con\_sqlite))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] "customers"
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# Retrieve all customer records}
+\NormalTok{imported\_data }\OtherTok{\textless{}{-}} \FunctionTok{dbReadTable}\NormalTok{(}
+\NormalTok{  con\_sqlite,}
+  \StringTok{"customers"}
+\NormalTok{)}
+
+\FunctionTok{print}\NormalTok{(imported\_data)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##   customer_id     name age balance
+## 1           1    Alice  25    1000
+## 2           2      Bob  30    1500
+## 3           3 Claudine  28   20000
+## 4           4    David  35    1200
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# Query customers whose balance exceeds 10000}
+\NormalTok{query\_result }\OtherTok{\textless{}{-}} \FunctionTok{dbGetQuery}\NormalTok{(}
+\NormalTok{  con\_sqlite,}
+  \StringTok{"SELECT name, balance}
+\StringTok{   FROM customers}
+\StringTok{   WHERE balance \textgreater{} 10000"}
+\NormalTok{)}
+
+\CommentTok{\# Display the query result}
+\FunctionTok{print}\NormalTok{(query\_result)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##       name balance
+## 1 Claudine   20000
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# Close the database connection}
+\FunctionTok{dbDisconnect}\NormalTok{(con\_sqlite)}
+\end{Highlighting}
+\end{Shaded}
+
+\subsection{Explanation}\label{explanation-2}
+
+The \texttt{dbConnect()} function establishes a connection to the SQLite
+database. The \texttt{dbWriteTable()} function stores customer data in a
+table named \texttt{customers}.
+
+The \texttt{dbReadTable()} function retrieves the table into R, while
+\texttt{dbGetQuery()} executes an SQL statement to select customers
+whose balances exceed 10,000.
+
+\subsection{Result}\label{result-2}
+
+The query returns Claudine, whose balance is 20,000. The complete
+customer table is also displayed.
+
+\section{4. Importing Data from MySQL Using
+XAMPP}\label{importing-data-from-mysql-using-xampp}
+
+MySQL is a relational database management system that can be run locally
+using XAMPP. In this example, R connects to an existing database named
+\texttt{wpdbase}.
+
+The \texttt{DBI} package provides database functions, while
+\texttt{RMariaDB} provides the connection driver.
+
+\textbf{Prerequisites:} Start MySQL in XAMPP and ensure that the
+\texttt{wpdbase} database contains a table named \texttt{department}.
+
+\subsection{R code}\label{r-code-3}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{library}\NormalTok{(DBI)}
+\FunctionTok{library}\NormalTok{(RMariaDB)}
+
+\CommentTok{\# Connect to the existing MySQL database}
+\NormalTok{con\_mysql }\OtherTok{\textless{}{-}} \FunctionTok{dbConnect}\NormalTok{(}
+\NormalTok{  RMariaDB}\SpecialCharTok{::}\FunctionTok{MariaDB}\NormalTok{(),}
+  \AttributeTok{host =} \StringTok{"127.0.0.1"}\NormalTok{,}
+  \AttributeTok{port =} \DecValTok{3306}\NormalTok{,}
+  \AttributeTok{username =} \StringTok{"root"}\NormalTok{,}
+  \AttributeTok{password =} \StringTok{""}\NormalTok{,}
+  \AttributeTok{dbname =} \StringTok{"wpdbase"}
+\NormalTok{)}
+
+\CommentTok{\# Check whether the connection is valid}
+\FunctionTok{print}\NormalTok{(}\FunctionTok{dbIsValid}\NormalTok{(con\_mysql))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] TRUE
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# Display all tables in the database}
+\NormalTok{tables }\OtherTok{\textless{}{-}} \FunctionTok{dbListTables}\NormalTok{(con\_mysql)}
+\FunctionTok{print}\NormalTok{(tables)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] "assignment" "department" "employee"   "project"
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# Check whether the department table exists}
+\ControlFlowTok{if}\NormalTok{ (}\FunctionTok{dbExistsTable}\NormalTok{(con\_mysql, }\StringTok{"department"}\NormalTok{)) \{}
+
+  \CommentTok{\# Import the department table into R}
+\NormalTok{  dept\_data }\OtherTok{\textless{}{-}} \FunctionTok{dbReadTable}\NormalTok{(}
+\NormalTok{    con\_mysql,}
+    \StringTok{"department"}
+\NormalTok{  )}
+
+  \CommentTok{\# Display the first six rows}
+  \FunctionTok{print}\NormalTok{(}\FunctionTok{head}\NormalTok{(dept\_data))}
+
+  \CommentTok{\# Display the dimensions}
+  \FunctionTok{print}\NormalTok{(}\FunctionTok{dim}\NormalTok{(dept\_data))}
+
+  \CommentTok{\# Retrieve up to five records using SQL}
+\NormalTok{  query\_result }\OtherTok{\textless{}{-}} \FunctionTok{dbGetQuery}\NormalTok{(}
+\NormalTok{    con\_mysql,}
+    \StringTok{"SELECT * FROM department LIMIT 5"}
+\NormalTok{  )}
+
+  \FunctionTok{print}\NormalTok{(query\_result)}
+
+\NormalTok{\} }\ControlFlowTok{else}\NormalTok{ \{}
+  \FunctionTok{cat}\NormalTok{(}
+    \StringTok{"The department table was not found in wpdbase.}\SpecialCharTok{\textbackslash{}n}\StringTok{"}\NormalTok{,}
+    \StringTok{"Check the table name and available tables.}\SpecialCharTok{\textbackslash{}n}\StringTok{"}
+\NormalTok{  )}
+\NormalTok{\}}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##    DepartmentName BudgetCode OfficeNumber DepartmentPhone
+## 1      Accounting  BC-500-10   BLDG01-120    360-285-8405
+## 2  Administration  BC-100-10   BLDG01-210     30-285-8100
+## 3         Finance  BC-400-10   BLDG01-110    360-285-8400
+## 4 Human Resources  BC-300-10   BLDG01-230    360-285-8300
+## 5     InfoSystems  BC-700-10   BLDG02-210    360-285-8600
+## 6           Legal  BC-200-10   BLDG01-220    360-285-8200
+## [1] 9 4
+##    DepartmentName BudgetCode OfficeNumber DepartmentPhone
+## 1      Accounting  BC-500-10   BLDG01-120    360-285-8405
+## 2  Administration  BC-100-10   BLDG01-210     30-285-8100
+## 3         Finance  BC-400-10   BLDG01-110    360-285-8400
+## 4 Human Resources  BC-300-10   BLDG01-230    360-285-8300
+## 5     InfoSystems  BC-700-10   BLDG02-210    360-285-8600
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# Close the database connection}
+\FunctionTok{dbDisconnect}\NormalTok{(con\_mysql)}
+\end{Highlighting}
+\end{Shaded}
+
+\subsection{Explanation}\label{explanation-3}
+
+The \texttt{dbConnect()} function connects R to the MySQL-compatible
+server running on the local computer.
+
+The \texttt{dbListTables()} function lists the available tables. The
+\texttt{dbReadTable()} function imports the \texttt{department} table,
+and \texttt{dbGetQuery()} retrieves up to five records using SQL.
+
+\subsection{Result}\label{result-3}
+
+If the database connection succeeds and the \texttt{department} table
+exists, the report displays the imported data, its dimensions, and the
+query results.
+
+If the table does not exist, a message is displayed instead.
+
+\textbf{Note:} The connection settings above assume a local XAMPP
+configuration with username \texttt{root} and an empty password. Change
+them if your MySQL setup uses different credentials. Never publish
+database passwords in a public repository.
+
+\section{5. Importing Data from a Web
+API}\label{importing-data-from-a-web-api}
+
+A web API allows applications to exchange data over the internet. Many
+REST APIs return data in JSON format.
+
+This example uses JSONPlaceholder, a free testing API that provides
+sample posts.
+
+The \texttt{httr2} package sends the HTTP request and retrieves the
+response.
+
+\subsection{R code}\label{r-code-4}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{library}\NormalTok{(httr2)}
+
+\CommentTok{\# Define the API endpoint}
+\NormalTok{api\_url }\OtherTok{\textless{}{-}} \StringTok{"https://jsonplaceholder.typicode.com/posts"}
+
+\CommentTok{\# Send the HTTP request}
+\NormalTok{response }\OtherTok{\textless{}{-}} \FunctionTok{request}\NormalTok{(api\_url) }\SpecialCharTok{|\textgreater{}}
+  \FunctionTok{req\_perform}\NormalTok{()}
+
+\CommentTok{\# Display the HTTP status code}
+\NormalTok{status\_code }\OtherTok{\textless{}{-}} \FunctionTok{resp\_status}\NormalTok{(response)}
+\FunctionTok{print}\NormalTok{(status\_code)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 200
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# Convert JSON data into an R data frame}
+\NormalTok{api\_data }\OtherTok{\textless{}{-}} \FunctionTok{resp\_body\_json}\NormalTok{(}
+\NormalTok{  response,}
+  \AttributeTok{simplifyVector =} \ConstantTok{TRUE}
+\NormalTok{)}
+
+\CommentTok{\# Display the first six records}
+\FunctionTok{print}\NormalTok{(}\FunctionTok{head}\NormalTok{(api\_data))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##   userId id
+## 1      1  1
+## 2      1  2
+## 3      1  3
+## 4      1  4
+## 5      1  5
+## 6      1  6
+##                                                                        title
+## 1 sunt aut facere repellat provident occaecati excepturi optio reprehenderit
+## 2                                                               qui est esse
+## 3                ea molestias quasi exercitationem repellat qui ipsa sit aut
+## 4                                                       eum et est occaecati
+## 5                                                         nesciunt quas odio
+## 6                                         dolorem eum magni eos aperiam quia
+##                                                                                                                                                                                                                body
+## 1                                                 quia et suscipit\nsuscipit recusandae consequuntur expedita et cum\nreprehenderit molestiae ut ut quas totam\nnostrum rerum est autem sunt rem eveniet architecto
+## 2 est rerum tempore vitae\nsequi sint nihil reprehenderit dolor beatae ea dolores neque\nfugiat blanditiis voluptate porro vel nihil molestiae ut reiciendis\nqui aperiam non debitis possimus qui neque nisi nulla
+## 3                                           et iusto sed quo iure\nvoluptatem occaecati omnis eligendi aut ad\nvoluptatem doloribus vel accusantium quis pariatur\nmolestiae porro eius odio et labore et velit aut
+## 4                 ullam et saepe reiciendis voluptatem adipisci\nsit amet autem assumenda provident rerum culpa\nquis hic commodi nesciunt rem tenetur doloremque ipsam iure\nquis sunt voluptatem rerum illo velit
+## 5                                                            repudiandae veniam quaerat sunt sed\nalias aut fugiat sit autem sed est\nvoluptatem omnis possimus esse voluptatibus quis\nest aut tenetur dolor neque
+## 6             ut aspernatur corporis harum nihil quis provident sequi\nmollitia nobis aliquid molestiae\nperspiciatis et ea nemo ab reprehenderit accusantium quas\nvoluptate dolores velit et doloremque molestiae
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# Display the structure}
+\FunctionTok{str}\NormalTok{(api\_data)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## 'data.frame':    100 obs. of  4 variables:
+##  $ userId: int  1 1 1 1 1 1 1 1 1 1 ...
+##  $ id    : int  1 2 3 4 5 6 7 8 9 10 ...
+##  $ title : chr  "sunt aut facere repellat provident occaecati excepturi optio reprehenderit" "qui est esse" "ea molestias quasi exercitationem repellat qui ipsa sit aut" "eum et est occaecati" ...
+##  $ body  : chr  "quia et suscipit\nsuscipit recusandae consequuntur expedita et cum\nreprehenderit molestiae ut ut quas totam\nn"| __truncated__ "est rerum tempore vitae\nsequi sint nihil reprehenderit dolor beatae ea dolores neque\nfugiat blanditiis volupt"| __truncated__ "et iusto sed quo iure\nvoluptatem occaecati omnis eligendi aut ad\nvoluptatem doloribus vel accusantium quis pa"| __truncated__ "ullam et saepe reiciendis voluptatem adipisci\nsit amet autem assumenda provident rerum culpa\nquis hic commodi"| __truncated__ ...
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# Display the number of rows and columns}
+\FunctionTok{dim}\NormalTok{(api\_data)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 100   4
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# Display summary information}
+\FunctionTok{summary}\NormalTok{(api\_data)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##      userId           id               title            body    
+##  Min.   : 1.0   Min.   :  1.00   Length   :100   Length   :100  
+##  1st Qu.: 3.0   1st Qu.: 25.75   N.unique :100   N.unique :100  
+##  Median : 5.5   Median : 50.50   N.blank  :  0   N.blank  :  0  
+##  Mean   : 5.5   Mean   : 50.50   Min.nchar: 12   Min.nchar:102  
+##  3rd Qu.: 8.0   3rd Qu.: 75.25   Max.nchar: 79   Max.nchar:225  
+##  Max.   :10.0   Max.   :100.00
+\end{verbatim}
+
+\subsection{Explanation}\label{explanation-4}
+
+The \texttt{request()} function defines the API endpoint, while
+\texttt{req\_perform()} sends the HTTP request.
+
+The \texttt{resp\_status()} function checks the HTTP status code. A
+status code of \texttt{200} indicates a successful response.
+
+The \texttt{resp\_body\_json()} function converts the returned JSON data
+into an R object. With \texttt{simplifyVector\ =\ TRUE}, the regular
+tabular response can be represented as a data frame.
+
+\subsection{Result}\label{result-4}
+
+The API normally returns 100 posts, with four variables:
+\texttt{userId}, \texttt{id}, \texttt{title}, and \texttt{body}.
+
+An active internet connection is required to run this example.
+
+\section{6. Comparison of the Five Data Import
+Methods}\label{comparison-of-the-five-data-import-methods}
+
+{\def\LTcaptype{none} % do not increment counter
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 6\tabcolsep) * \real{0.2500}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 6\tabcolsep) * \real{0.2500}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 6\tabcolsep) * \real{0.2500}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 6\tabcolsep) * \real{0.2500}}@{}}
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Data source
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Format or system
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+R package or function
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Main purpose
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+SPSS & \texttt{.sav} & \texttt{haven::read\_sav()} & Import statistical
+data \\
+Stata & \texttt{.dta} & \texttt{haven::read\_dta()} & Import Stata
+datasets \\
+SQLite & SQLite database file & \texttt{DBI}, \texttt{RSQLite} & Create
+tables and retrieve data \\
+MySQL & MySQL database server & \texttt{DBI}, \texttt{RMariaDB} &
+Connect to an existing database \\
+Web API & JSON over HTTP & \texttt{httr2} & Retrieve data from an online
+service \\
+\end{longtable}
+}
+
+\section{7. Conclusion}\label{conclusion}
+
+This assignment demonstrates five practical methods of importing data
+into R.
+
+First, the \texttt{haven} package was used to import data from SPSS and
+Stata files. Second, the \texttt{DBI} interface and database drivers
+were used to create and retrieve data from SQLite and connect to an
+existing MySQL database. Finally, the \texttt{httr2} package was used to
+retrieve JSON data from a web API.
+
+These techniques are important in data science because data is often
+stored across multiple formats, databases, and online services.
+Understanding how to import and inspect these datasets provides a
+foundation for further data cleaning, analysis, visualization, and
+statistical modeling.
+
+\section{References}\label{references}
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  R Project: \url{https://www.r-project.org/}
+\item
+  Haven package: \url{https://haven.tidyverse.org/}
+\item
+  DBI package: \url{https://dbi.r-dbi.org/}
+\item
+  RMariaDB package: \url{https://rmariadb.r-dbi.org/}
+\item
+  RSQLite package: \url{https://rsqlite.r-dbi.org/}
+\item
+  httr2 package: \url{https://httr2.r-lib.org/}
+\item
+  SQLite: \url{https://www.sqlite.org/}
+\item
+  JSONPlaceholder API: \url{https://jsonplaceholder.typicode.com/}
+\end{enumerate}
+
+\end{document}

@@ -1,0 +1,771 @@
+---
+title: "R Class one revision"
+author: "Josue Iraduknda"
+date: "2026-10-25"
+output: html_document
+---
+
+# Introduction
+
+This document contains class practices and my trials referring to the Lecturer materials
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = TRUE,
+  message = FALSE,
+  warning = FALSE
+)
+```
+
+# 1. Introduction to R
+
+R is a programming language used for statistical computing, data analysis, and visualization.
+
+## 1.1 Basic calculations
+
+```{r}
+2 + 5
+10 - 3
+5 * 4
+20 / 5
+2^2
+sqrt(49)
+```
+
+# 2. Data structures
+
+## 2.1 Vectors
+
+A vector stores elements of the same basic data type.
+
+### Numeric vectors
+
+```{r}
+x <- c(0.6, 0.7)
+age <- c(20, 35, 32, 29)
+
+summary(age)
+mean(age)
+```
+
+### Logical vectors
+
+```{r}
+x <- c(TRUE, FALSE)
+x <- c(T, F)
+
+x
+```
+
+### Character vectors
+
+```{r}
+x <- c("a", "b", "c")
+class_gender <- c("M", "F", "F", "M")
+
+x
+class_gender
+```
+
+### Integer sequences
+
+```{r}
+x <- 9:29
+x
+```
+
+### Complex numbers
+
+```{r}
+x <- c(1 + 0i, 2 + 4i)
+x
+```
+
+## 2.2 Matrices
+
+A matrix stores elements of the same data type in rows and columns.
+
+```{r}
+x <- matrix(1:6, nrow = 2, ncol = 3)
+x
+
+y <- matrix(1:6, nrow = 3, ncol = 2)
+y
+
+x %*% y
+```
+
+## 2.3 Lists
+
+A list can contain elements of different data types.
+
+```{r}
+x <- list(1, "a", TRUE, 1 + 4i)
+x
+```
+
+## 2.4 Factors
+
+Factors represent categorical variables.
+
+```{r}
+x <- factor(c("yes", "yes", "no", "yes", "no"))
+x
+
+levels(x)
+```
+
+## 2.5 Missing values
+
+```{r}
+x <- c(1, 2, NA, 10, 3)
+
+is.na(x)
+
+x <- c(1, 2, 4, "NA", 5)
+bad <- is.na(x)
+
+print(bad)
+x[!bad]
+```
+
+Notice that `"NA"` is a character string, whereas `NA` represents a missing value.
+
+### Checking complete cases
+
+```{r}
+x <- c(1, 2, NA, 4, NA, 5)
+y <- c("a", "b", NA, "d", NA, "f")
+
+good <- complete.cases(x, y)
+good
+```
+
+## 2.6 Type coercion
+
+R converts elements to a common type when necessary.
+
+```{r}
+sum(c(TRUE, TRUE, FALSE, FALSE, FALSE))
+```
+
+# 3. Creating data frames
+
+A data frame can contain different data types in separate columns.
+
+```{r}
+studentID <- c(1, 2, 3, 4, 5)
+math_score <- c(12, 17, 10, 9, NA)
+gender <- c("M", "F", "M", "M", "F")
+it_score <- c(13, 18, 11, 10, 19)
+
+scoredata <- data.frame(
+  studentID,
+  gender,
+  math_score,
+  it_score
+)
+
+scoredata
+str(scoredata)
+summary(scoredata)
+```
+
+## 3.1 Entering data manually
+
+```{r, eval=FALSE}
+data_class2 <- data.frame(
+  height = numeric(0),
+  weight = numeric(0),
+  bmi = numeric(0)
+)
+
+data_class2 <- edit(data_class2)
+```
+
+Run this code interactively in RStudio if you want to enter data through the data editor.
+
+# 4. Data importation
+
+R can import data from text files, spreadsheets, statistical software, and databases.
+
+## 4.1 Importing a text file
+
+The original document uses a local text file containing height and weight measurements.
+
+The following code generates example data so that this report can run without that file.
+
+```{r}
+data_class <- data.frame(
+  HEIGHT = c(
+    161, 155, 158, 170, 160, 156, 162, 158, 158, 167,
+    160, 155, 154, 155, 157, 157, 160, 158, 160, 160,
+    152, 154, 150, 161, 162, 164, 161, 155, 159, 163,
+    159, 160, 158, 165, 156, 163, 155, 164, 163, 168,
+    157, 164, 154
+  ),
+  WEIGHT = c(
+    50, 49, 42, 65, 60, 52, 58, 46, 45, 51,
+    60, 42, 53, 48, 48, 48, 53, 52, 51, 53,
+    44, 56, 63, 52, 57, 49, 52, 54, 46, 50,
+    61, 55, 45, 63, 60, 56, 52, 47, 52, 55,
+    48, 58, 55
+  )
+)
+
+head(data_class)
+tail(data_class)
+data_class[10:20, ]
+```
+
+To import the original file when you have it, use:
+
+```{r, eval=FALSE}
+data_class <- read.table(
+  "class_data.txt",
+  header = TRUE
+)
+
+names(data_class)
+head(data_class)
+tail(data_class)
+```
+
+## 4.2 Exploring built-in datasets
+
+```{r}
+data()
+data("airquality")
+
+names(airquality)
+str(airquality)
+head(airquality)
+summary(airquality)
+```
+
+# 5. Exploratory data analysis
+
+## 5.1 Summary statistics
+
+```{r}
+data_class
+
+summary(data_class)
+str(data_class)
+```
+
+## 5.2 Means and standard deviations
+
+```{r}
+apply(data_class, 1, mean)
+apply(data_class, 2, sd)
+
+c(
+  Mean = mean(data_class$HEIGHT),
+  SD = sd(data_class$HEIGHT)
+)
+
+c(
+  Mean = mean(data_class$WEIGHT),
+  SD = sd(data_class$WEIGHT)
+)
+```
+
+# 6. Relationships between variables
+
+## 6.1 Categorical and continuous variables
+
+The `iris` dataset is built into R.
+
+```{r}
+data("iris")
+head(iris)
+
+mean(iris$Petal.Length)
+
+mean(iris$Petal.Length[iris$Species == "setosa"])
+mean(iris$Petal.Length[iris$Species == "versicolor"])
+mean(iris$Petal.Length[iris$Species == "virginica"])
+```
+
+### Grouped statistics
+
+```{r}
+by(iris$Petal.Length, iris$Species, mean)
+by(iris$Petal.Length, iris$Species, sd)
+by(iris$Petal.Length, iris$Species, summary)
+```
+
+### Box-and-whisker plot
+
+```{r}
+boxplot(
+  Sepal.Length ~ Species,
+  data = iris,
+  main = "Comparison of Sepal Length by Species",
+  xlab = "Species",
+  ylab = "Sepal Length"
+)
+```
+
+## 6.2 Relationships between categorical variables
+
+```{r}
+ucba <- data.frame(UCBAdmissions)
+
+head(ucba)
+
+cross <- xtabs(Freq ~ Gender + Admit, data = ucba)
+cross
+
+prop.table(cross, 1)
+```
+
+## 6.3 Simpson's paradox
+
+Simpson's paradox occurs when a relationship observed in combined data disappears or reverses when the data are divided into groups.
+
+```{r}
+cross2 <- xtabs(
+  Freq ~ Gender + Admit,
+  data = ucba[ucba$Dept == "F", ]
+)
+
+prop.table(cross2, 1)
+```
+
+# 7. Data visualization
+
+## 7.1 Bar charts
+
+```{r}
+dat <- read.table(
+  text = "ProdA ProdB ProdC ProdD
+1 110 50 60 70
+2 120 50 80 65",
+  header = TRUE
+)
+
+barplot(
+  as.matrix(dat),
+  beside = TRUE,
+  col = c("red", "green"),
+  main = "Product Comparison",
+  xlab = "Products",
+  ylab = "Values",
+  legend.text = TRUE
+)
+```
+
+## 7.2 Another bar chart
+
+```{r}
+dat <- read.table(
+  text = "A B C D E F G
+1 10 80 30 90 70 60 90
+2 20 50 70 50 40 10 40
+3 60 80 80 60 60 30 160
+4 20 40 70 80 20 10 70",
+  header = TRUE
+)
+
+barplot(
+  as.matrix(dat),
+  main = "Comparison of Categories",
+  xlab = "Categories",
+  ylab = "Values",
+  beside = TRUE
+)
+```
+
+## 7.3 Scatter plots
+
+```{r}
+plot(
+  WEIGHT ~ HEIGHT,
+  data = data_class,
+  main = "Weight versus Height",
+  xlab = "Height",
+  ylab = "Weight"
+)
+
+plot(data_class$HEIGHT, data_class$WEIGHT)
+
+plot(
+  data_class[, 1],
+  data_class[, 2],
+  main = "Height and Weight"
+)
+
+cor(data_class$HEIGHT, data_class$WEIGHT)
+```
+
+## 7.4 Histograms
+
+```{r}
+hist(
+  data_class$HEIGHT,
+  main = "Distribution of Height",
+  xlab = "Height"
+)
+
+hist(
+  data_class$WEIGHT,
+  main = "Distribution of Weight",
+  xlab = "Weight",
+  col = "blue"
+)
+```
+
+# 8. Linear models
+
+## 8.1 Fitting a linear regression model
+
+```{r}
+plot(
+  WEIGHT ~ HEIGHT,
+  data = data_class,
+  main = "Linear Regression: Weight and Height",
+  xlab = "Height",
+  ylab = "Weight"
+)
+
+model1 <- lm(WEIGHT ~ HEIGHT, data = data_class)
+
+abline(model1, lwd = 2)
+
+summary(model1)
+```
+
+## 8.2 Predicting height from weight
+
+```{r}
+data_lm <- lm(HEIGHT ~ WEIGHT, data = data_class)
+
+summary(data_lm)
+```
+
+## 8.3 Regression diagnostic plots
+
+```{r}
+par(mfrow = c(2, 2))
+plot(data_lm)
+par(mfrow = c(1, 1))
+```
+
+## 8.4 Linear regression and a smooth curve
+
+```{r}
+plot(
+  WEIGHT ~ HEIGHT,
+  data = data_class,
+  main = "Linear and Smoothed Relationships",
+  xlab = "Height",
+  ylab = "Weight"
+)
+
+abline(
+  lm(WEIGHT ~ HEIGHT, data = data_class),
+  col = "red"
+)
+
+lines(
+  lowess(data_class$HEIGHT, data_class$WEIGHT),
+  col = "blue",
+  lwd = 2
+)
+
+cor(data_class$HEIGHT, data_class$WEIGHT)
+
+lm(WEIGHT ~ HEIGHT, data = data_class)
+```
+
+# 9. Data management
+
+## 9.1 Creating a new variable: BMI
+
+Body Mass Index (BMI) is calculated by dividing weight in kilograms by height in metres squared.
+
+\[
+BMI = \frac{Weight\ (kg)}{Height\ (m)^2}
+\]
+
+```{r}
+BMI <- data_class$WEIGHT /
+  (data_class$HEIGHT / 100)^2
+
+BMI
+
+BMI <- round(
+  data_class$WEIGHT /
+    (data_class$HEIGHT / 100)^2,
+  digits = 2
+)
+
+BMI
+```
+
+### Adding BMI to the data frame
+
+```{r}
+head(cbind(data_class, BMI), n = 5)
+
+new_data_class <- cbind(data_class, BMI)
+
+tail(new_data_class, n = 10)
+```
+
+## 9.2 Summary of BMI
+
+```{r}
+summary(BMI)
+
+stem(BMI, scale = 2)
+```
+
+# 10. Working with dates
+
+## 10.1 Today's date
+
+```{r}
+today <- Sys.Date()
+
+format(today, format = "%B %d %Y")
+format(today, format = "%A")
+```
+
+## 10.2 Calculating age in days
+
+```{r}
+today <- Sys.Date()
+dob <- as.Date("1982-02-10")
+
+difftime(today, dob, units = "days")
+```
+
+## 10.3 Difference between two dates
+
+```{r}
+startdate <- as.Date("2004-02-13")
+enddate <- as.Date("2011-01-22")
+
+days <- enddate - startdate
+days
+```
+
+# 11. Subsetting and data cleaning
+
+## 11.1 Creating a leadership dataset
+
+```{r}
+manager <- c(1, 2, 3, 4, 5)
+country <- c("US", "US", "UK", "UK", "UK")
+gender <- c("M", "F", "F", "M", "F")
+age <- c(32, 45, 25, 39, 99)
+
+q1 <- c(5, 3, 3, 3, 2)
+q2 <- c(4, 5, 5, 3, 2)
+q3 <- c(5, 2, 5, 4, 1)
+q4 <- c(5, 5, 5, NA, 2)
+q5 <- c(5, 5, 2, NA, 1)
+
+leadership <- data.frame(
+  manager,
+  country,
+  gender,
+  age,
+  q1, q2, q3, q4, q5
+)
+
+str(leadership)
+names(leadership)
+```
+
+## 11.2 Handling missing values
+
+In this example, the value 99 is treated as a missing age.
+
+```{r}
+leadership$age[leadership$age == 99] <- NA
+```
+
+### Creating age categories
+
+```{r}
+leadership$agecat <- NA_character_
+
+leadership$agecat[
+  leadership$age > 75
+] <- "Elder"
+
+leadership$agecat[
+  leadership$age >= 35 & leadership$age <= 75
+] <- "Middle Aged"
+
+leadership$agecat[
+  leadership$age < 35
+] <- "Young"
+
+leadership
+```
+
+### Identifying missing values
+
+```{r}
+is.na(leadership[, 5:9])
+```
+
+### Removing rows with missing values
+
+```{r}
+newdata <- na.omit(leadership)
+newdata
+```
+
+`na.omit()` removes rows containing missing values in any column.
+
+# 12. Sorting data
+
+```{r}
+order(leadership$age)
+
+newdata2 <- leadership[
+  order(leadership$age),
+]
+
+newdata2
+```
+
+# 13. Merging data frames
+
+The `merge()` function joins data frames horizontally using common key columns.
+
+For example:
+
+```{r, eval=FALSE}
+merge(dataframeA, dataframeB, by = "ID")
+
+merge(
+  dataframeA,
+  dataframeB,
+  by = c("ID", "country")
+)
+```
+
+The `rbind()` function combines data frames vertically when their columns are compatible.
+
+```{r}
+data1 <- data.frame(
+  ID = c(1, 2),
+  score = c(12, 15)
+)
+
+data2 <- data.frame(
+  ID = c(3, 4),
+  score = c(18, 20)
+)
+
+rbind(data1, data2)
+```
+
+# 14. Selecting variables and observations
+
+## 14.1 Selecting columns
+
+```{r}
+newdata3 <- leadership[, 5:9]
+newdata3
+
+myvars <- c("q1", "q2", "q3", "q4", "q5")
+
+newdata3 <- leadership[myvars]
+newdata3
+```
+
+## 14.2 Removing columns
+
+```{r}
+newdata4 <- leadership[, c(-1, -2)]
+newdata4
+
+newdata5 <- leadership[, c(-1, -7)]
+newdata5
+```
+
+## 14.3 Accessing a column
+
+```{r}
+leadership[[4]]
+
+leadership$age
+```
+
+Both expressions access the age column.
+
+## 14.4 Selecting rows
+
+```{r}
+newdata6 <- leadership[c(2, 4, 5), ]
+
+newdata6
+```
+
+## 14.5 Selecting rows using conditions
+
+```{r}
+newdata7 <- subset(
+  leadership,
+  age >= 35 | age < 24,
+  select = c(q1, q2, q3, q4, q5)
+)
+
+newdata7
+```
+
+### Selecting male managers older than 30
+
+```{r}
+newdata8 <- subset(
+  leadership,
+  gender == "M" & age > 30
+)
+
+newdata8
+```
+
+
+### Data management with dplyr
+
+
+data source from the package nycflights3 and ggplot2 this 
+
+```{r}
+
+library(dplyr)
+library(nycflights13)
+library(tidyverse)
+
+View(flights)
+
+result <- flights %>%
+  group_by(carrier) %>%
+  summarise(total_flights = n())
+
+print(result)
+```
+
+### data visualization
+
+```{r}
+
+library(ggplot2)
+
+data("mtcars")
+
+view(mtcars)
+table(mtcars$cyl)
+#barplot(table(mtcars$cyl),main =)
+
+#ggplot(data = mtcars,ass(x=wt,y=))
+```
+

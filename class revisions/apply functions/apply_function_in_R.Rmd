@@ -1,0 +1,527 @@
+---
+title: "The apply Functions in R: apply, lapply, sapply, vapply, tapply and split"
+author: "Your Name"
+date: "2026-11-05"
+output:html_document:
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE,
+                      fig.width = 7, fig.height = 4.5)
+```
+
+# Introduction
+
+Loops (`for`, `while`) are not the only way to repeat an operation in R. The **apply functions** applies a function over the pieces of a data structure and collects the results. The code is shorter, usually clearer, and avoids common loop bugs (forgetting to pre-allocate, off-by-one indices, etc.).
+
+
+
+# The datasets
+
+We use two datasets that ship with R
+
+* `mtcars` — 32 cars, 11 numeric variables (mpg, cyl, hp, wt, ...).
+* `iris` — 150 flowers, 4 numeric measurements and a `Species` factor.
+
+```{r data}
+data(mtcars)
+data(iris)
+
+# Make a few categorical versions of mtcars variables with readable labels
+cars <- mtcars
+cars$cyl_f  <- factor(cars$cyl)
+cars$am_f   <- factor(cars$am, levels = c(0, 1), labels = c("Automatic", "Manual"))
+cars$gear_f <- factor(cars$gear)
+
+str(cars)
+head(cars)
+```
+
+```{r iris-look}
+str(iris)
+summary(iris)
+```
+
+# `apply()` — over the margins of a matrix
+
+
+
+
+## Column and row summaries
+
+```{r apply-basic}
+num <- mtcars[, c("mpg", "hp", "wt", "disp")]
+
+# Column means  (MARGIN = 2)
+apply(num, 2, mean)
+
+# Column standard deviations
+apply(num, 2, sd)
+
+# Row-wise maximum for the first 6 cars (MARGIN = 1)
+head(apply(num, 1, max))
+```
+
+## Passing extra arguments
+
+Anything after `FUN` is handed to `FUN`:
+
+```{r apply-args}
+# Pass probs = to quantile()
+apply(num, 2, quantile, probs = c(0.25, 0.5, 0.75))
+
+# Round the results using the round() digits argument via an anonymous function
+apply(num, 2, function(x) round(mean(x), 2))
+```
+
+## Functions that return more than one value
+
+When `FUN` returns a vector of length *k*, `apply()` returns a matrix with *k* rows (for `MARGIN = 2`):
+
+```{r apply-matrix-return}
+apply(num, 2, function(x) c(min = min(x), mean = mean(x), max = max(x)))
+```
+
+Note for `MARGIN = 1`, the result is **transposed** (each row's result becomes a *column*), which often surprises people:
+
+```{r apply-transposed}
+head(t(apply(num, 1, function(x) c(total = sum(x), avg = mean(x)))))
+```
+
+## Applying to every cell: `MARGIN = c(1, 2)`
+
+```{r apply-cells}
+# Standardise (z-score) each cell using column statistics requires care;
+# here is the simpler cell-wise example: convert weight (1000 lbs) to kg
+wt_kg <- apply(mtcars[, "wt", drop = FALSE], c(1, 2), function(x) x * 453.592)
+head(wt_kg)
+```
+
+## A practical use: standardising each column
+
+```{r apply-scale}
+z <- apply(num, 2, function(x) (x - mean(x)) / sd(x))
+round(head(z), 3)
+
+# Verify: means ~ 0, sd = 1
+round(apply(z, 2, mean), 10)
+apply(z, 2, sd)
+```
+
+## Dealing with `NA`s
+
+```{r apply-na}
+m <- as.matrix(num)
+m[c(2, 5), "mpg"] <- NA
+apply(m, 2, mean)                 # NA for mpg
+apply(m, 2, mean, na.rm = TRUE)   # na.rm is passed through ...
+```
+
+> **When to use `apply()`:** matrices and arrays. For plain data-frame column summaries, `sapply()`/`vapply()` are usually better because they don't coerce the whole data frame to a matrix. For simple sums/means, `rowSums()`, `colMeans()` etc. are much faster.
+
+# `lapply()` — "list apply"
+
+## Syntax
+
+```r
+lapply(X, FUN, ...)
+```
+
+`lapply()` takes a vector, list or data frame and returns a **list of the same length**, one result per element. A data frame is a list of columns, so `lapply(df, f)` applies `f` to every column.
+
+## On a data frame (columns)
+
+```{r lapply-df}
+# The class of each column
+lapply(mtcars[, 1:4], class)
+
+# Mean of each column — returned as a list
+lapply(mtcars[, 1:4], mean)
+```
+
+## On a list of vectors
+
+```{r lapply-list}
+my_list <- list(a = 1:10, b = c(2.5, 3.1, 8.4), c = c(100, 200, 300, 400))
+
+lapply(my_list, length)
+lapply(my_list, summary)
+```
+
+## Extra arguments and anonymous functions
+
+```{r lapply-args}
+lapply(my_list, mean, trim = 0.1)
+
+lapply(my_list, function(x) x[x > 2])   # keep elements greater than 2
+```
+
+## Using an index: `seq_along()` and `names()`
+
+Sometimes you need the *name* or *position* of each element:
+
+```{r lapply-index}
+res <- lapply(seq_along(my_list), function(i) {
+  paste0("Element '", names(my_list)[i], "' has ", length(my_list[[i]]), " values")
+})
+unlist(res)
+```
+
+## Mixed column types (iris)
+
+```{r lapply-iris}
+lapply(iris, function(x) {
+  if (is.numeric(x)) round(mean(x), 2) else levels(x)
+})
+```
+
+## Combining list results back into a data frame
+
+Lists are flexible but sometimes inconvenient. `do.call(rbind, ...)` stacks the pieces:
+
+```{r lapply-rbind}
+stats_list <- lapply(mtcars[, 1:4], function(x) {
+  data.frame(mean = mean(x), sd = sd(x), min = min(x), max = max(x))
+})
+stats_df <- do.call(rbind, stats_list)
+round(stats_df, 2)
+```
+
+# `sapply()` — "simplifying apply"
+
+## Syntax
+
+```r
+sapply(X, FUN, ..., simplify = TRUE, USE.NAMES = TRUE)
+```
+
+`sapply()` is `lapply()` followed by an attempt to simplify the list:
+
+* every result has length 1 → a **vector**
+* every result has the same length *k* > 1 → a **matrix** with *k* rows
+* otherwise → stays a **list**
+
+```{r sapply-basic}
+# Length-1 results -> named numeric vector
+sapply(mtcars, mean)
+
+# Length-1 logical results -> named logical vector
+sapply(iris, is.numeric)
+```
+
+```{r sapply-matrix}
+# Length-2 results -> a 2 x n matrix
+sapply(mtcars[, 1:4], range)
+
+# Naming the pieces gives helpful row names
+sapply(mtcars[, 1:4], function(x) c(mean = mean(x), sd = sd(x), n = length(x)))
+```
+
+```{r sapply-list}
+# Results of different lengths cannot be simplified -> list
+sapply(list(a = 1:3, b = 1:5), function(x) x[x %% 2 == 0])
+```
+
+## Over a plain vector
+
+```{r sapply-vector}
+sapply(1:5, function(i) i^2)
+
+# USE.NAMES = TRUE labels the result when the input is a character vector
+sapply(c("mpg", "hp", "wt"), function(v) mean(mtcars[[v]]))
+```
+
+## A caution: unpredictable return types
+
+Because `sapply()` decides how to simplify at run time, its output type can change depending on the input. On empty input it returns an empty **list**, not an empty numeric vector, which can break downstream code:
+
+```{r sapply-pitfall}
+sapply(character(0), nchar)       # list()   <- not numeric(0)!
+class(sapply(NULL, length))
+```
+
+This is exactly the problem `vapply()` solves.
+
+# `vapply()` — "safe" `sapply()`
+
+## Syntax
+
+```r
+vapply(X, FUN, FUN.VALUE, ..., USE.NAMES = TRUE)
+```
+
+`FUN.VALUE` is a **template** describing what each call to `FUN` must return (its type *and* length). If a result doesn't match, `vapply()` stops with an error — better than silently producing a wrong structure. It is also slightly faster than `sapply()`.
+
+```{r vapply-basic}
+# Each call must return ONE numeric value
+vapply(mtcars, mean, FUN.VALUE = numeric(1))
+
+# Each call must return ONE logical value
+vapply(iris, is.numeric, FUN.VALUE = logical(1))
+```
+
+## Returning several values
+
+```{r vapply-matrix}
+# Each call returns a numeric vector of length 2 -> a 2 x ncol matrix
+vapply(mtcars[, 1:4], range, FUN.VALUE = numeric(2))
+
+# Name the template to name the rows of the result
+vapply(mtcars[, 1:4],
+       function(x) c(min = min(x), median = median(x), max = max(x)),
+       FUN.VALUE = c(min = 0, median = 0, max = 0))
+```
+
+## Behaviour on empty input — predictable!
+
+```{r vapply-empty}
+vapply(character(0), nchar, FUN.VALUE = integer(1))   # integer(0), as expected
+```
+
+## It fails loudly when something is wrong
+
+```{r vapply-error}
+# mean() returns a double, but we promise a character -> error
+res <- tryCatch(
+  vapply(mtcars[, 1:3], mean, FUN.VALUE = character(1)),
+  error = function(e) conditionMessage(e)
+)
+res
+
+# Wrong length: range() returns 2 values but we promise 1
+res2 <- tryCatch(
+  vapply(mtcars[, 1:3], range, FUN.VALUE = numeric(1)),
+  error = function(e) conditionMessage(e)
+)
+res2
+```
+
+> **Rule of thumb:** use `sapply()` interactively for quick exploration; use `vapply()` in scripts, packages and anything that must be reliable.
+
+# `split()` — cut data into groups
+
+## Syntax
+
+```r
+split(x, f, drop = FALSE, ...)
+```
+
+* `x` – a vector or data frame.
+* `f` – a factor (or list of factors) defining the groups.
+* Returns a **list**, one element per group. `split()` does not compute anything itself; it prepares the groups for `lapply()`/`sapply()`/`vapply()`.
+
+## Splitting a vector
+
+```{r split-vector}
+mpg_by_cyl <- split(cars$mpg, cars$cyl_f)
+mpg_by_cyl
+```
+
+## Splitting a data frame
+
+```{r split-df}
+by_cyl <- split(cars, cars$cyl_f)
+
+names(by_cyl)
+sapply(by_cyl, nrow)       # number of cars per cylinder group
+head(by_cyl[["4"]], 3)     # the 4-cylinder cars
+```
+
+## Split, then apply (the core pattern)
+
+```{r split-apply}
+# Mean mpg per cylinder group
+sapply(split(cars$mpg, cars$cyl_f), mean)
+
+# Several statistics per group, safely
+vapply(split(cars$mpg, cars$cyl_f),
+       function(x) c(n = length(x), mean = mean(x), sd = sd(x)),
+       FUN.VALUE = c(n = 0, mean = 0, sd = 0))
+```
+
+## Fit a model per group
+
+```{r split-model}
+models <- lapply(split(cars, cars$cyl_f), function(d) lm(mpg ~ wt, data = d))
+
+# Extract slope and R-squared from each model
+vapply(models, function(m) c(slope = coef(m)[["wt"]],
+                             r2    = summary(m)$r.squared),
+       FUN.VALUE = c(slope = 0, r2 = 0))
+```
+
+## Grouping by more than one factor
+
+```{r split-two}
+g <- split(cars$mpg, list(cars$cyl_f, cars$am_f))
+names(g)
+sapply(g, length)    # note: some combinations have 0 or very few cars
+```
+
+```{r split-drop}
+# drop = TRUE removes empty combinations
+g2 <- split(cars$mpg, list(cars$cyl_f, cars$am_f), drop = TRUE)
+sapply(g2, mean)
+```
+
+## Recombining results: `do.call(rbind, ...)` and `unsplit()`
+
+```{r split-recombine}
+# Summary data frame per group
+summ <- lapply(split(cars, cars$cyl_f), function(d) {
+  data.frame(cyl = unique(d$cyl), n = nrow(d),
+             mean_mpg = mean(d$mpg), mean_hp = mean(d$hp))
+})
+summary_df <- do.call(rbind, summ)
+rownames(summary_df) <- NULL
+summary_df
+```
+
+```{r unsplit}
+# Group-wise standardisation: z-score of mpg *within* each cylinder group,
+# then put the values back in the original row order with unsplit()
+z_within <- lapply(split(cars$mpg, cars$cyl_f), function(x) (x - mean(x)) / sd(x))
+cars$mpg_z_within_cyl <- unsplit(z_within, cars$cyl_f)
+
+head(cars[, c("cyl", "mpg", "mpg_z_within_cyl")])
+```
+
+## Using `split()` on iris
+
+```{r split-iris}
+iris_split <- split(iris[, 1:4], iris$Species)
+lapply(iris_split, colMeans)
+
+# Tidy into a matrix: species in columns
+sapply(iris_split, colMeans)
+```
+
+# `tapply()` — apply a function by group
+
+## Syntax
+
+```r
+tapply(X, INDEX, FUN, ..., default = NA, simplify = TRUE)
+```
+
+* `X` – a **vector** (one variable).
+* `INDEX` – a factor, or a **list of factors**, the same length as `X`.
+* `FUN` – function applied to the values of `X` in each group.
+
+`tapply(X, INDEX, FUN)` is essentially `sapply(split(X, INDEX), FUN)`, but it returns an array whose dimensions correspond to the factors.
+
+## One grouping factor
+
+```{r tapply-one}
+tapply(cars$mpg, cars$cyl_f, mean)
+tapply(cars$mpg, cars$cyl_f, sd)
+tapply(cars$hp,  cars$am_f,  median)
+
+# Same result as split + sapply
+sapply(split(cars$mpg, cars$cyl_f), mean)
+```
+
+## Two grouping factors → a two-way table
+
+```{r tapply-two}
+tapply(cars$mpg, list(Cylinders = cars$cyl_f, Transmission = cars$am_f), mean)
+```
+
+Notice any `NA` cells? These are combinations with **no observations**. Control the fill value with `default`:
+
+```{r tapply-default}
+tapply(cars$mpg, list(cars$cyl_f, cars$am_f), mean, default = 0)
+
+# Count the observations in each cell to see where the gaps are
+tapply(cars$mpg, list(cars$cyl_f, cars$am_f), length)
+```
+
+## Three factors → a three-dimensional array
+
+```{r tapply-three}
+tapply(cars$mpg, list(cars$cyl_f, cars$am_f, cars$gear_f), mean)
+```
+
+## Extra arguments
+
+```{r tapply-extra}
+# na.rm is passed on to mean()
+mpg_na <- cars$mpg
+mpg_na[c(1, 7, 15)] <- NA
+
+tapply(mpg_na, cars$cyl_f, mean)                # NAs propagate
+tapply(mpg_na, cars$cyl_f, mean, na.rm = TRUE)  # handled
+```
+
+## Functions returning multiple values
+
+When `FUN` returns a vector, `tapply()` returns a **list-array** (not a matrix). Convert it with `do.call(rbind, ...)`:
+
+```{r tapply-multi}
+res <- tapply(cars$mpg, cars$cyl_f,
+              function(x) c(mean = mean(x), sd = sd(x), n = length(x)))
+res                      # a 1-D list-array
+do.call(rbind, res)      # a tidy matrix
+```
+
+## Plotting `tapply()` output
+
+```{r tapply-plot}
+avg <- tapply(cars$mpg, cars$cyl_f, mean)
+barplot(avg, col = c("#4C78A8", "#F58518", "#54A24B"),
+        xlab = "Number of cylinders", ylab = "Mean mpg",
+        main = "Average fuel economy by cylinder count")
+```
+
+# Putting it together: a full workflow
+
+**Question:** For each cylinder group and transmission type, what is the average mpg, which group is most fuel efficient, and how does each car compare with its own group's average?
+
+```{r workflow}
+# 1. tapply: quick two-way table of means
+means_tbl <- tapply(cars$mpg, list(cars$cyl_f, cars$am_f), mean)
+round(means_tbl, 2)
+
+# 2. split: one data frame per (cyl, transmission) combination that exists
+groups <- split(cars, list(cars$cyl_f, cars$am_f), drop = TRUE)
+
+# 3. vapply: safe numeric summaries for each group
+summary_mat <- vapply(groups, function(d) c(n = nrow(d),
+                                            mean_mpg = mean(d$mpg),
+                                            mean_hp  = mean(d$hp),
+                                            mean_wt  = mean(d$wt)),
+                      FUN.VALUE = numeric(4))
+round(t(summary_mat), 2)
+
+# 4. Best group
+best <- names(which.max(summary_mat["mean_mpg", ]))
+cat("Most fuel-efficient group (cyl.transmission):", best, "\n")
+
+# 5. lapply + unsplit: each car's mpg relative to its group's mean
+rel <- lapply(groups, function(d) d$mpg - mean(d$mpg))
+cars$mpg_vs_group <- unsplit(rel, list(cars$cyl_f, cars$am_f), drop = TRUE)
+head(cars[, c("cyl", "am_f", "mpg", "mpg_vs_group")])
+
+# 6. apply: summarise the numeric columns row-wise (a per-car "performance index")
+perf <- apply(scale(cars[, c("mpg", "hp", "wt")]), 1,
+              function(r) r["mpg"] - r["wt"] + 0.5 * r["hp"])
+head(round(perf, 2))
+```
+
+# Comparison and choosing the right function
+
+```{r comparison}
+# The same task (column means) with every relevant function
+a <- apply(num, 2, mean)                       # matrix-oriented
+l <- unlist(lapply(num, mean))                 # list, then flatten
+s <- sapply(num, mean)                         # simplified
+v <- vapply(num, mean, numeric(1))             # type-safe
+
+all.equal(a, l); all.equal(a, s); all.equal(a, v)
+```
+
+
+
+
+
+

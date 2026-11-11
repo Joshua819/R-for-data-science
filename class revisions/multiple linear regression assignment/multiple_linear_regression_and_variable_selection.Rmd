@@ -1,0 +1,384 @@
+---
+title: "Multiple Linear Regression and Variable Selection in R"
+author: "Josue Iradukunda"
+date: "2026-11-09"
+output:html_document:
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = TRUE,
+  message = FALSE,
+  warning = FALSE,
+  fig.width = 7,
+  fig.height = 5
+)
+```
+
+# Introduction
+
+This assignment demonstrates how to:
+
+1. identify and describe a dataset suitable for multiple linear regression;
+2. fit and interpret a multiple linear regression model;
+3. assess model fit and examine regression assumptions; and
+4. explain and apply common variable-selection methods in R.
+
+The analysis uses the built-in **`mtcars`** dataset.
+
+## 1.2 Load and inspect the data
+
+```{r load-data}
+data(mtcars)
+cars <- mtcars
+
+# Convert transmission to a factor so R treats it as categorical
+cars$am <- factor(cars$am,
+                  levels = c(0, 1),
+                  labels = c("Automatic", "Manual"))
+
+head(cars)
+```
+
+```{r data-structure}
+str(cars)
+dim(cars)
+summary(cars)
+```
+
+There are 32 observations (cars) and 11 variables in the original dataset. The `am` variable is converted to a factor because transmission type represents categories, not a numerical measurement.
+
+## 1.3 Check missing values
+
+```{r missing-values}
+colSums(is.na(cars))
+```
+
+The original `mtcars` dataset has no missing values. Therefore, all 32 observations can be used in the model.
+
+## 1.4 Explore the response and predictors
+
+```{r mpg-histogram}
+hist(cars$mpg,
+     main = "Distribution of Fuel Efficiency",
+     xlab = "Miles per gallon (mpg)",
+     col = "lightblue",
+     border = "white")
+```
+
+```{r correlation}
+# Correlations among the numeric variables
+numeric_cars <- cars[sapply(cars, is.numeric)]
+round(cor(numeric_cars), 2)
+```
+
+A correlation describes the strength and direction of a pairwise linear association. Correlation alone does not establish causation, and strong correlations among predictors can make individual regression coefficients less stable.
+
+# 2. Multiple linear regression
+
+## 2.1 What is multiple linear regression?
+
+Multiple linear regression models the relationship between one continuous response variable and two or more explanatory variables.
+
+The general model is:
+
+\[
+Y_i = \beta_0 + \beta_1X_{i1} + \beta_2X_{i2}
+      + \cdots + \beta_pX_{ip} + \epsilon_i
+\]
+
+Where:
+
+- \(Y_i\) is the response for observation \(i\);
+- \(\beta_0\) is the intercept;
+- \(\beta_j\) is the coefficient for predictor \(j\);
+- \(X_{ij}\) is the value of predictor \(j\) for observation \(i\); and
+- \(\epsilon_i\) is the error term.
+
+For this assignment, fuel efficiency (`mpg`) is the response variable.
+
+## 2.2 Fit the initial multiple regression model
+
+We begin with six predictors: weight, horsepower, quarter-mile time, transmission, displacement, and rear axle ratio.
+
+```{r fit-full-model}
+full_model <- lm(
+  mpg ~ wt + hp + qsec + am + disp + drat,
+  data = cars
+)
+
+summary(full_model)
+```
+
+The `lm()` function fits a linear model. The `summary()` function displays coefficient estimates, standard errors, t-statistics, p-values, residual standard error, R-squared, adjusted R-squared, and the overall F-test.
+
+
+## 2.3 Extract important model statistics
+
+```{r model-statistics}
+model_summary <- summary(full_model)
+
+cat("R-squared:", round(model_summary$r.squared, 3), "\n")
+cat("Adjusted R-squared:", round(model_summary$adj.r.squared, 3), "\n")
+cat("Residual standard error:", round(model_summary$sigma, 3), "\n")
+cat("Overall F-test p-value:",
+    signif(pf(model_summary$fstatistic[1],
+              model_summary$fstatistic[2],
+              model_summary$fstatistic[3],
+              lower.tail = FALSE), 4),
+    "\n")
+```
+
+The numerical values printed by this code should be reported in the written interpretation. For example: “The adjusted R-squared is ___, meaning that the model accounts for approximately ___% of the variation in mpg after adjusting for the number of predictors.”
+
+## 2.4 Make predictions
+
+The following code predicts fuel efficiency for a hypothetical car. The values are illustrative and are not an additional observation from the dataset.
+
+```{r prediction}
+new_car <- data.frame(
+  wt = 3.0,
+  hp = 120,
+  qsec = 17.5,
+  am = factor("Manual", levels = levels(cars$am)),
+  disp = 200,
+  drat = 3.5
+)
+
+predict(full_model, newdata = new_car, interval = "confidence")
+```
+
+The fitted value is the model's estimated mean mpg for cars with these characteristics. The confidence interval describes uncertainty in the estimated mean response, not the range for an individual car.
+
+# 3. Checking regression assumptions
+
+Regression diagnostics help assess whether the model is an appropriate description of the data. They do not prove that every assumption is true.
+
+## 3.1 Linearity and residual patterns
+
+```{r diagnostic-plots}
+par(mfrow = c(2, 2))
+plot(full_model)
+par(mfrow = c(1, 1))
+```
+
+Interpret the diagnostic plots as follows:
+
+1. **Residuals vs Fitted:** residuals should be scattered around zero without a clear curve or systematic pattern. A curved pattern may indicate non-linearity.
+2. **Normal Q-Q:** points should lie approximately along the reference line if residuals are approximately normally distributed.
+3. **Scale-Location:** a roughly horizontal band with similar spread supports constant variance.
+4. **Residuals vs Leverage:** observations with unusually high leverage or influence deserve investigation.
+
+## 3.2 Normality of residuals
+
+```{r normality-test}
+shapiro.test(residuals(full_model))
+```
+
+The Shapiro-Wilk test has a null hypothesis that the residuals are normally distributed. A p-value below 0.05 suggests evidence against normality. Consider this test together with the Q-Q plot; with a small sample, neither should be treated as a perfect decision rule.
+
+## 3.3 Constant variance
+
+```{r residual-spread}
+plot(fitted(full_model), residuals(full_model),
+     xlab = "Fitted values",
+     ylab = "Residuals",
+     main = "Residuals versus fitted values")
+abline(h = 0, lty = 2)
+```
+
+Look for a reasonably even vertical spread across fitted values. A funnel-shaped pattern may indicate non-constant error variance.
+
+## 3.4 Multicollinearity
+
+Multicollinearity occurs when explanatory variables are strongly related to one another. It can make coefficient estimates unstable and increase their standard errors.
+
+A simple way to investigate it is to inspect the predictor correlation matrix shown earlier. A more formal diagnostic is the variance inflation factor (VIF). The following base-R code calculates VIF values without requiring an extra package.
+
+```{r vif}
+predictor_names <- c("wt", "hp", "qsec", "am", "disp", "drat")
+
+vif_values <- sapply(predictor_names, function(variable) {
+  other_predictors <- setdiff(predictor_names, variable)
+  auxiliary_formula <- reformulate(other_predictors, response = variable)
+  auxiliary_model <- lm(auxiliary_formula, data = cars)
+  1 / (1 - summary(auxiliary_model)$r.squared)
+})
+
+round(vif_values, 2)
+```
+
+VIF measures how much the variance of a coefficient is inflated because of linear relationships with the other predictors. Values around 1 indicate little linear association with the other predictors; larger values deserve attention. Rules such as 5 or 10 are only rough guidelines, not universal cut-offs.
+
+## 3.5 Independence
+
+Independence concerns how observations and their errors relate to one another. The `mtcars` data are observations of different cars, not a time series. However, independence should ultimately be justified by how the data were collected; it cannot be established from a single diagnostic plot.
+
+
+
+# 4. Apply variable selection in R
+
+We will compare forward, backward, and bidirectional selection using the same candidate predictor set. R's built-in `step()` function performs stepwise model selection using AIC by default.
+
+## 4.1 Define the upper and lower models
+
+```{r define-scope}
+null_model <- lm(mpg ~ 1, data = cars)
+
+full_candidate_model <- lm(
+  mpg ~ wt + hp + qsec + am + disp + drat,
+  data = cars
+)
+
+# Define the range of models that the search may consider
+selection_scope <- list(
+  lower = formula(null_model),
+  upper = formula(full_candidate_model)
+)
+```
+
+## 4.2 Forward selection
+
+```{r forward-selection}
+forward_model <- step(
+  null_model,
+  scope = selection_scope,
+  direction = "forward",
+  trace = 0
+)
+
+summary(forward_model)
+formula(forward_model)
+AIC(forward_model)
+```
+
+This starts with the intercept-only model and adds predictors when doing so reduces AIC.
+
+## 4.3 Backward elimination
+
+```{r backward-selection}
+backward_model <- step(
+  full_candidate_model,
+  direction = "backward",
+  trace = 0
+)
+
+summary(backward_model)
+formula(backward_model)
+AIC(backward_model)
+```
+
+This starts with all six candidate predictors and removes terms when doing so reduces AIC.
+
+## 4.4 Bidirectional stepwise selection
+
+```{r both-selection}
+both_model <- step(
+  null_model,
+  scope = selection_scope,
+  direction = "both",
+  trace = 0
+)
+
+summary(both_model)
+formula(both_model)
+AIC(both_model)
+```
+
+This starts from the null model and allows the search to add or remove predictors within the defined scope.
+
+## 4.5 Compare the selected models
+
+```{r compare-models}
+model_comparison <- data.frame(
+  Method = c("Initial full model",
+             "Forward selection",
+             "Backward elimination",
+             "Bidirectional stepwise"),
+  Number_of_predictors = c(
+    length(attr(terms(full_candidate_model), "term.labels")),
+    length(attr(terms(forward_model), "term.labels")),
+    length(attr(terms(backward_model), "term.labels")),
+    length(attr(terms(both_model), "term.labels"))
+  ),
+  AIC = c(
+    AIC(full_candidate_model),
+    AIC(forward_model),
+    AIC(backward_model),
+    AIC(both_model)
+  ),
+  Adjusted_R_squared = c(
+    summary(full_candidate_model)$adj.r.squared,
+    summary(forward_model)$adj.r.squared,
+    summary(backward_model)$adj.r.squared,
+    summary(both_model)$adj.r.squared
+  )
+)
+
+model_comparison[order(model_comparison$AIC), ]
+```
+
+For models fitted to the same response and observations, lower AIC indicates a better trade-off between fit and complexity according to AIC. The table also shows the number of predictors and adjusted R-squared.
+
+Forward, backward, and bidirectional searches may sometimes produce the same model, but this is not guaranteed. Their result depends on the candidate variables, starting model, and selection criterion.
+
+## 4.6 Use BIC instead of AIC
+
+The `step()` function uses AIC by default. Setting `k = log(n)` applies the BIC penalty.
+
+```{r bic-selection}
+bic_model <- step(
+  full_candidate_model,
+  direction = "backward",
+  k = log(nrow(cars)),
+  trace = 0
+)
+
+summary(bic_model)
+formula(bic_model)
+BIC(bic_model)
+```
+
+BIC often favors a more compact model than AIC, although the result depends on the data.
+
+## 4.7 Interpret the selected model
+
+```{r selected-model-interpretation}
+cat("Selected model formula:\n")
+print(formula(both_model))
+
+cat("\nSelected model summary:\n")
+summary(both_model)
+
+cat("\nSelected model adjusted R-squared:\n")
+round(summary(both_model)$adj.r.squared, 3)
+```
+
+To interpret the selected model:
+
+1. Identify the predictors retained in `formula(both_model)`.
+2. Read each coefficient and its sign.
+3. Interpret each coefficient while holding the other selected predictors constant.
+4. Check the p-values and confidence intervals, but do not treat selection-based p-values as if the model had been specified in advance.
+5. Compare adjusted R-squared and AIC with the initial model.
+6. Consider whether the selected variables make practical and subject-matter sense.
+
+## 4.8 Important limitations of automatic selection
+
+Automatic selection is useful for learning and exploratory analysis, but it has important limitations:
+
+- Small changes in the data can lead to a different selected model.
+- Repeated searching can make ordinary p-values and confidence intervals too optimistic.
+- A selected association does not demonstrate causation.
+- AIC or BIC selection does not replace subject-matter knowledge.
+- A model selected on the same data used to evaluate it may appear more accurate than it will be on new data.
+
+For predictive work, assess performance on separate test data or by cross-validation. For scientific inference, decide on important predictors using theory and study design, and account for the selection process.
+
+
+# 5. References
+
+1. R Core Team. *R: A language and environment for statistical computing*. The `mtcars` dataset is included with R.
+2. R Core Team. *R Documentation: Choose a model by AIC in a Stepwise Algorithm (`stats::step`)*. https://stat.ethz.ch/R-manual/R-devel/library/stats/html/step.html
+3. R Companion. *Multiple Regression*. https://rcompanion.org/rcompanion/e_05.html
+

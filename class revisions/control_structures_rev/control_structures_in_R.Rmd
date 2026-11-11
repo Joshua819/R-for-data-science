@@ -1,0 +1,683 @@
+---
+title: "Control Structures and Error handling on the airquality dataset"
+author: "Josue Iraduknda"
+date: "2026-11-01"
+output:html_document:
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE,
+                      fig.width = 7, fig.height = 4.5)
+```
+
+# Introduction
+
+**Control structures** decide *which* code runs and *how many times*. In data management they are how you:
+
+* check data quality before processing (`if` / `else`),
+* create new categorical variables from numeric ones (`ifelse`, `switch`),
+* repeat the same cleaning step on many columns, months or groups (`for`),
+* skip or stop early when something is wrong (`next`, `break`),
+* keep going until a condition is met, e.g. until no outliers remain (`while`, `repeat`),
+* handle failures gracefully (`stop`, `warning`, `tryCatch`).
+
+
+
+# The dataset: `airquality`
+
+`airquality` contains daily air quality measurements in New York, May to September 1973 (153 rows). It is useful here because it has **missing values** in `Ozone` and `Solar.R`.
+
+| Variable | Description |
+ ---------- -------------
+ `Ozone`    Mean ozone (ppb) 
+ `Solar.R`  Solar radiation (langleys) 
+ `Wind`     Average wind speed (mph) 
+ `Temp`     Maximum daily temperature (°F) 
+ `Month`    Month (5 to 9) 
+ `Day`      Day of month 
+
+```{r data}
+aq <- airquality          # work on a copy; never modify the original
+str(aq)
+head(aq, 10)
+summary(aq)
+```
+
+```{r missing-overview}
+colSums(is.na(aq))
+round(colMeans(is.na(aq)) * 100, 1)   # % missing per column
+```
+
+# Conditional statements: `if`, `else if`, `else`
+
+## Basic syntax
+
+```r
+if (condition) {
+  # runs when condition is TRUE
+} else if (other_condition) {
+  # runs when the first is FALSE and this is TRUE
+} else {
+  # runs otherwise
+}
+```
+
+The `condition` must be a **single** `TRUE` or `FALSE` (a length-one logical). `NA` causes an error.
+
+## A data-quality check
+
+```{r if-basic}
+n_missing <- sum(is.na(aq$Ozone))
+
+if (n_missing > 0) {
+  cat("Ozone has", n_missing, "missing values (",
+      round(100 * n_missing / nrow(aq), 1), "%).\n")
+} else {
+  cat("Ozone is complete.\n")
+}
+```
+
+## Several branches in a function
+
+```{r if-elseif}
+classify_temp <- function(t) {
+  if (is.na(t)) {
+    "Missing"
+  } else if (t < 60) {
+    "Cold"
+  } else if (t < 80) {
+    "Mild"
+  } else {
+    "Hot"
+  }
+}
+
+classify_temp(aq$Temp[1])    # 67
+classify_temp(95)
+classify_temp(NA)
+```
+
+## Logical operators in conditions: `&&`, `||` vs `&`, `|`
+
+* `&&` and `||` work on **single** values and short-circuit (the right side is skipped if the left decides the answer). Use them inside `if`.
+* `&` and `|` work **element-wise** on vectors. Use them for filtering.
+
+```{r if-operators}
+x <- aq$Ozone[1:6]
+x
+
+# Element-wise: returns a vector
+x > 20 & !is.na(x)
+
+# Short-circuit: single TRUE/FALSE, safe from NA problems
+val <- aq$Ozone[5]               # NA
+if (!is.na(val) && val > 50) "high" else "not high / missing"
+```
+
+## Common pitfall: `if` on a vector
+
+Since R 4.2, giving `if` a condition longer than one is an **error**. Collapse the condition with `any()`, `all()` or use `ifelse()`.
+
+```{r if-vector-error}
+res <- tryCatch(
+  if (aq$Temp > 80) "hot",
+  error = function(e) conditionMessage(e)
+)
+res
+
+# Correct: ask a single question about the whole vector
+if (any(aq$Temp > 95)) cat("At least one day exceeded 95F\n")
+if (all(aq$Temp > 50))  cat("All days were above 50F\n")
+```
+
+## Useful condition helpers
+
+```{r if-helpers}
+is.na(c(1, NA, 3))
+anyNA(aq$Ozone)
+isTRUE(all(aq$Month %in% 5:9))      # isTRUE() guards against NA
+is.numeric(aq$Temp)
+is.null(NULL)
+```
+
+## Validate a data frame before working on it
+
+```{r if-validate}
+validate_airquality <- function(df) {
+  required <- c("Ozone", "Solar.R", "Wind", "Temp", "Month", "Day")
+
+  if (!is.data.frame(df)) {
+    stop("Input must be a data frame.")
+  }
+  if (!all(required %in% names(df))) {
+    missing_cols <- setdiff(required, names(df))
+    stop("Missing columns: ", paste(missing_cols, collapse = ", "))
+  }
+  if (nrow(df) == 0) {
+    warning("Data frame has zero rows.")
+    return(FALSE)
+  }
+  TRUE
+}
+
+validate_airquality(aq)
+
+tryCatch(validate_airquality(aq[, 1:3]),
+         error = function(e) cat("Validation failed:", conditionMessage(e), "\n"))
+```
+
+# Vectorised conditionals: `ifelse()`
+
+`ifelse(test, yes, no)` evaluates `test` for **every element** and picks `yes` or `no` for each. It is the standard way to create a new column from a condition.
+
+## Create a categorical variable
+
+```{r ifelse-basic}
+aq$Temp_cat <- ifelse(aq$Temp < 60, "Cold",
+                ifelse(aq$Temp < 80, "Mild", "Hot"))
+
+table(aq$Temp_cat)
+head(aq[, c("Temp", "Temp_cat")])
+```
+
+## Flag missing values
+
+```{r ifelse-flag}
+aq$Ozone_missing <- ifelse(is.na(aq$Ozone), "Missing", "Observed")
+table(aq$Ozone_missing, aq$Month)
+```
+
+## `ifelse()` and `NA`
+
+`NA` in the test gives `NA` in the output. Handle it explicitly:
+
+```{r ifelse-na}
+aq$Ozone_level <- ifelse(is.na(aq$Ozone), "Unknown",
+                   ifelse(aq$Ozone > 70, "High",
+                    ifelse(aq$Ozone > 30, "Moderate", "Low")))
+table(aq$Ozone_level)
+```
+
+## Alternative for many break points: `cut()`
+
+Deeply nested `ifelse()` calls get hard to read. For numeric ranges, `cut()` is cleaner:
+
+```{r cut}
+aq$Temp_cut <- cut(aq$Temp,
+                   breaks = c(-Inf, 60, 80, Inf),
+                   labels = c("Cold", "Mild", "Hot"),
+                   right  = FALSE)         # intervals are [a, b)
+table(aq$Temp_cut)
+
+# Same answer as the nested ifelse
+identical(as.character(aq$Temp_cut), aq$Temp_cat)
+```
+
+## Conditional subsetting: logical filters and `which()`
+
+```{r subsetting}
+# Days with ozone above 100 ppb (exclude NA explicitly)
+high_ozone <- aq[!is.na(aq$Ozone) & aq$Ozone > 100,
+                 c("Ozone", "Temp", "Wind", "Month", "Day")]
+high_ozone
+
+# which() ignores NA and returns row positions
+which(aq$Ozone > 100)
+
+# Without handling NA, the filter produces junk "NA rows"
+nrow(aq[aq$Ozone > 100, ])               # includes NA rows!
+nrow(aq[which(aq$Ozone > 100), ])        # correct
+
+# subset() drops NA tests automatically
+nrow(subset(aq, Ozone > 100 & Month == 8))
+```
+
+# Choosing among alternatives: `switch()`
+
+`switch(EXPR, name1 = value1, name2 = value2, ..., default)` picks the branch whose name matches the string `EXPR`. If no name matches, the unnamed last argument is returned as a default.
+
+## A function that selects a statistic by name
+
+```{r switch-basic}
+describe_col <- function(x, stat = "mean") {
+  switch(stat,
+    mean   = mean(x, na.rm = TRUE),
+    median = median(x, na.rm = TRUE),
+    sd     = sd(x, na.rm = TRUE),
+    range  = ,                                   # fall-through: same as next line
+    spread = diff(range(x, na.rm = TRUE)),
+    stop("Unknown statistic: '", stat, "'")      # default
+  )
+}
+
+describe_col(aq$Temp, "mean")
+describe_col(aq$Temp, "median")
+describe_col(aq$Temp, "range")      # falls through to "spread"
+
+tryCatch(describe_col(aq$Temp, "mode"),
+         error = function(e) conditionMessage(e))
+```
+
+## Recoding labels: months to periods
+
+`switch()` handles a **single** value, so to recode a whole column, combine it with `sapply()` / `vapply()`:
+
+```{r switch-recode}
+month_to_period <- function(m) {
+  switch(as.character(m),
+         "5" = ,
+         "6" = "Early summer",
+         "7" = ,
+         "8" = "Peak summer",
+         "9" = "Late summer",
+         NA_character_)
+}
+
+aq$Period <- vapply(aq$Month, month_to_period, FUN.VALUE = character(1))
+table(aq$Month, aq$Period)
+```
+
+## Numeric `switch()`
+
+When `EXPR` is a number, it selects by position:
+
+```{r switch-numeric}
+switch(2, "first", "second", "third")
+```
+
+(This is less readable and less safe than named alternatives. Prefer strings.)
+
+# Loops: `for`
+
+
+## Loop over columns: missing-value report
+
+```{r for-cols}
+for (col in names(airquality)) {
+  n_na <- sum(is.na(airquality[[col]]))
+  cat(sprintf("%-8s | missing: %3d | %5.1f%%\n",
+              col, n_na, 100 * n_na / nrow(airquality)))
+}
+```
+
+## Pre-allocate results, then fill
+
+Growing a vector inside a loop (`x <- c(x, new)`) is slow. Create the container first.
+
+```{r for-prealloc}
+vars <- c("Ozone", "Solar.R", "Wind", "Temp")
+
+col_means <- numeric(length(vars))
+names(col_means) <- vars
+
+for (i in seq_along(vars)) {
+  col_means[i] <- mean(airquality[[vars[i]]], na.rm = TRUE)
+}
+round(col_means, 2)
+```
+
+## Loop over rows: classification
+
+```{r for-rows}
+comfort <- character(nrow(aq))      # pre-allocate
+
+for (i in seq_len(nrow(aq))) {
+  t <- aq$Temp[i]
+  w <- aq$Wind[i]
+
+  comfort[i] <- if (t >= 80 && w < 8) {
+    "Hot and stuffy"
+  } else if (t >= 80) {
+    "Hot and breezy"
+  } else if (t < 60) {
+    "Cold"
+  } else {
+    "Comfortable"
+  }
+}
+
+aq$Comfort <- comfort
+table(aq$Comfort)
+```
+
+## Nested loops: a month by variable summary matrix
+
+```{r for-nested}
+months <- sort(unique(aq$Month))
+
+summary_mat <- matrix(NA_real_,
+                      nrow = length(months), ncol = length(vars),
+                      dimnames = list(month.abb[months], vars))
+
+for (m in months) {
+  for (v in vars) {
+    summary_mat[month.abb[m], v] <- mean(aq[aq$Month == m, v], na.rm = TRUE)
+  }
+}
+round(summary_mat, 1)
+```
+
+## Loop over a list of data frames (split by group)
+
+```{r for-split}
+by_month <- split(aq, aq$Month)
+
+results <- vector("list", length(by_month))
+names(results) <- paste0("Month_", names(by_month))
+
+for (nm in names(by_month)) {
+  d <- by_month[[nm]]
+  results[[paste0("Month_", nm)]] <- data.frame(
+    month      = as.integer(nm),
+    n_days     = nrow(d),
+    max_temp   = max(d$Temp),
+    mean_ozone = round(mean(d$Ozone, na.rm = TRUE), 1),
+    pct_na     = round(100 * mean(is.na(d$Ozone)), 1)
+  )
+}
+
+monthly_report <- do.call(rbind, results)
+rownames(monthly_report) <- NULL
+monthly_report
+```
+
+## Visualising the loop result
+
+```{r for-plot}
+barplot(monthly_report$mean_ozone,
+        names.arg = month.abb[monthly_report$month],
+        col = "steelblue", xlab = "Month", ylab = "Mean ozone (ppb)",
+        main = "Average ozone by month (missing values removed)")
+```
+
+# Controlling loops: `next` and `break`
+
+* `next` skips the rest of the current iteration and moves on.
+* `break` leaves the loop entirely.
+
+## `next`: skip columns that don't qualify
+
+```{r next}
+# Add a text column and a logical column so the data is of mixed type
+mixed <- transform(airquality, Station = "NYC", Rainy = Wind > 12)
+
+for (col in names(mixed)) {
+  if (!is.numeric(mixed[[col]])) {
+    cat("Skipping non-numeric column:", col, "\n")
+    next
+  }
+  if (!anyNA(mixed[[col]])) next          # nothing to report
+
+  cat("Column", col, "has", sum(is.na(mixed[[col]])), "missing values\n")
+}
+```
+
+## `break`: stop at the first match
+
+```{r break}
+first_high <- NA_integer_
+
+for (i in seq_len(nrow(aq))) {
+  if (is.na(aq$Ozone[i])) next            # ignore missing readings
+  if (aq$Ozone[i] > 100) {
+    first_high <- i
+    break                                  # no need to look further
+  }
+}
+
+first_high
+aq[first_high, c("Ozone", "Temp", "Month", "Day")]
+```
+
+## `next` and `break` together: build a data-quality log
+
+```{r next-break-log}
+log_entries <- character(0)
+
+for (col in names(airquality)) {
+  x <- airquality[[col]]
+  pct <- 100 * mean(is.na(x))
+
+  if (pct == 0) next                                  # clean column, move on
+  log_entries <- c(log_entries,
+                   sprintf("%s: %.1f%% missing", col, pct))
+
+  if (pct > 50) {                                     # unusable: stop the audit
+    log_entries <- c(log_entries, "STOP: more than half missing")
+    break
+  }
+}
+log_entries
+```
+
+# Loops with conditions: `while` and `repeat`
+
+## `while`: repeat as long as a condition holds
+
+
+### Accumulate until a threshold
+
+```{r while-accumulate}
+threshold <- 2000
+i <- 0
+total <- 0
+
+while (total < threshold && i < nrow(aq)) {
+  i <- i + 1
+  if (!is.na(aq$Ozone[i])) total <- total + aq$Ozone[i]
+}
+
+cat("Cumulative ozone first exceeded", threshold, "after", i, "days (total =", total, ")\n")
+cat("That is", format(as.Date(sprintf("1973-%02d-%02d", aq$Month[i], aq$Day[i])), "%d %B"), "\n")
+```
+
+### Iterative outlier removal
+
+Removing outliers changes the mean and standard deviation, which can expose new outliers. A `while` loop repeats until the data is stable.
+
+```{r while-outliers}
+x <- aq$Ozone[!is.na(aq$Ozone)]
+n_start <- length(x)
+iteration <- 0
+
+while (length(x) > 5 && any(abs(x - mean(x)) > 2.5 * sd(x))) {
+  keep <- abs(x - mean(x)) <= 2.5 * sd(x)
+  cat(sprintf("Iteration %d: removing %d value(s)\n", iteration + 1, sum(!keep)))
+  x <- x[keep]
+  iteration <- iteration + 1
+}
+
+cat("Started with", n_start, "values, finished with", length(x),
+    "after", iteration, "iteration(s)\n")
+```
+
+```{r while-outliers-plot}
+boxplot(list(Original = aq$Ozone, Trimmed = x),
+        col = c("tomato", "seagreen"), ylab = "Ozone (ppb)",
+        main = "Ozone before and after iterative outlier trimming")
+```
+
+## `repeat`: loop forever until `break`
+
+
+
+```{r repeat}
+set.seed(123)
+target   <- mean(aq$Temp)
+attempts <- 0
+
+repeat {
+  attempts <- attempts + 1
+  s <- sample(aq$Temp, size = 20)
+
+  if (abs(mean(s) - target) < 0.5) break          # success
+
+  if (attempts >= 1000) {                          # safety valve
+    warning("No acceptable sample found")
+    break
+  }
+}
+
+cat("Found a representative sample of 20 days after", attempts, "attempt(s)\n")
+cat("Population mean:", round(target, 2), "| sample mean:", round(mean(s), 2), "\n")
+```
+
+> **Always include a safety valve** (maximum iterations) in `while` / `repeat` loops that depend on data to avoid infinite loops.
+
+# Handling problems: `stop()`, `warning()`, `tryCatch()`
+
+Control flow is also about what happens when something goes wrong.
+
+
+
+```{r trycatch}
+safe_mean <- function(x) {
+  tryCatch({
+    if (!is.numeric(x)) stop("input is not numeric")
+    if (all(is.na(x)))  warning("all values are NA")
+    mean(x, na.rm = TRUE)
+  },
+  warning = function(w) {
+    cat("  Warning caught:", conditionMessage(w), "\n")
+    NA_real_
+  },
+  error = function(e) {
+    cat("  Error caught:", conditionMessage(e), "\n")
+    NA_real_
+  },
+  finally = cat("  (checked one column)\n"))
+}
+
+test_cols <- list(Temp = aq$Temp,
+                  Label = aq$Temp_cat,          # character: will error
+                  AllNA = rep(NA_real_, 5))     # all NA: will warn
+
+for (nm in names(test_cols)) {
+  cat(nm, ":\n")
+  print(safe_mean(test_cols[[nm]]))
+}
+```
+
+# A complete example: a configurable cleaning function
+
+This function combines **everything**: validation with `if`/`stop`, `match.arg` and `switch` to choose a strategy, a `for` loop over columns, `next` to skip, and `ifelse`/`pmin` to cap outliers.
+
+```{r cleaning-function}
+clean_airquality <- function(df,
+                             method     = c("mean", "median", "drop", "none"),
+                             outlier_sd = NULL,
+                             verbose    = TRUE) {
+
+  method <- match.arg(method)                       # validates the choice
+  stopifnot(is.data.frame(df))                      # basic guard
+  if (!is.null(outlier_sd) && outlier_sd <= 0) {
+    stop("`outlier_sd` must be positive.")
+  }
+
+  id_cols <- c("Month", "Day")                      
+
+  # Step 1: missing values 
+  if (method == "drop") {
+    out <- df[complete.cases(df), ]
+    if (verbose) cat("Dropped", nrow(df) - nrow(out), "incomplete rows\n")
+  } else {
+    out <- df
+    for (col in names(out)) {
+      if (!is.numeric(out[[col]])) next             # skip text/logical
+      if (col %in% id_cols)        next
+      miss <- is.na(out[[col]])
+      if (!any(miss))              next             # nothing to impute
+      if (method == "none")        next
+
+      fill <- switch(method,
+                     mean   = mean(out[[col]],   na.rm = TRUE),
+                     median = median(out[[col]], na.rm = TRUE))
+
+      out[[col]][miss] <- fill
+      if (verbose) {
+        cat(sprintf("Imputed %2d value(s) in %-8s with %s = %.2f\n",
+                    sum(miss), col, method, fill))
+      }
+    }
+  }
+
+  # Step 2: cap extreme values 
+  if (!is.null(outlier_sd)) {
+    for (col in setdiff(names(out), id_cols)) {
+      if (!is.numeric(out[[col]])) next
+      m <- mean(out[[col]], na.rm = TRUE)
+      s <- sd(out[[col]],   na.rm = TRUE)
+      upper <- m + outlier_sd * s
+      lower <- m - outlier_sd * s
+      n_cap <- sum(out[[col]] > upper | out[[col]] < lower, na.rm = TRUE)
+      if (n_cap == 0) next
+      out[[col]] <- pmin(pmax(out[[col]], lower), upper)
+      if (verbose) cat(sprintf("Capped %d outlier(s) in %s\n", n_cap, col))
+    }
+  }
+
+  out
+}
+```
+
+Try it with different strategies:
+
+```{r cleaning-demo}
+cat("--- Mean imputation + cap at 3 SD ---\n")
+clean_mean <- clean_airquality(airquality, method = "mean", outlier_sd = 3)
+
+cat("\n--- Median imputation ---\n")
+clean_median <- clean_airquality(airquality, method = "median")
+
+cat("\n--- Drop incomplete rows ---\n")
+clean_drop <- clean_airquality(airquality, method = "drop")
+
+# Compare the outcomes
+comparison <- data.frame(
+  Strategy     = c("Original", "Mean", "Median", "Drop"),
+  Rows         = c(nrow(airquality), nrow(clean_mean), nrow(clean_median), nrow(clean_drop)),
+  Missing      = c(sum(is.na(airquality)), sum(is.na(clean_mean)),
+                   sum(is.na(clean_median)), sum(is.na(clean_drop))),
+  Mean_Ozone   = round(c(mean(airquality$Ozone, na.rm = TRUE), mean(clean_mean$Ozone),
+                         mean(clean_median$Ozone), mean(clean_drop$Ozone)), 2),
+  SD_Ozone     = round(c(sd(airquality$Ozone, na.rm = TRUE), sd(clean_mean$Ozone),
+                         sd(clean_median$Ozone), sd(clean_drop$Ozone)), 2)
+)
+comparison
+```
+
+Invalid input is caught by the control logic:
+
+```{r cleaning-errors}
+tryCatch(clean_airquality(airquality, method = "mode"),
+         error = function(e) cat("Error:", conditionMessage(e), "\n"))
+
+tryCatch(clean_airquality(list(a = 1)),
+         error = function(e) cat("Error:", conditionMessage(e), "\n"))
+
+tryCatch(clean_airquality(airquality, outlier_sd = -2),
+         error = function(e) cat("Error:", conditionMessage(e), "\n"))
+```
+
+Visual check of the imputation effect:
+
+```{r cleaning-plot}
+par(mfrow = c(1, 2))
+hist(airquality$Ozone, breaks = 20, col = "grey70", border = "white",
+     main = "Original (NAs ignored)", xlab = "Ozone (ppb)")
+hist(clean_mean$Ozone, breaks = 20, col = "steelblue", border = "white",
+     main = "Mean-imputed + capped", xlab = "Ozone (ppb)")
+par(mfrow = c(1, 1))
+```
+
+Notice the spike at the mean in the right-hand histogram: mean imputation reduces variance. That is a real trade-off to weigh when choosing the `method` argument.
+
+
+
+
+
+
+
+
+
+

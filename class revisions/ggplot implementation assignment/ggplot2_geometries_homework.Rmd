@@ -1,0 +1,358 @@
+---
+title: "Data Visualization in R Using ggplot2 using Airquality Dataset"
+author: "Josue Iradukunda"
+date: "2026-11-01"
+output:html_document:
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = TRUE,
+  message = FALSE,
+  warning = FALSE,
+  fig.align = "center",
+  fig.width = 8,
+  fig.height = 5,
+  out.width = "90%"
+)
+
+library(ggplot2)
+data("airquality")
+
+# Remove rows with missing values for plots that need complete observations.
+aq <- na.omit(airquality)
+
+# Treat month as a category so ggplot2 displays separate groups.
+aq$Month <- factor(
+  aq$Month,
+  levels = 5:9,
+  labels = c("May", "June", "July", "August", "September")
+)
+```
+
+# Introduction
+
+This assignment demonstrates thirteen `ggplot2` geometries using R's built-in
+`airquality` dataset. Each geometry creates a different type of visualization
+or adds a visual element to a plot.
+
+The `airquality` dataset contains daily air-quality measurements in New York
+from May to September 1973.
+
+
+## Inspect the data
+
+```{r inspect-data}
+head(airquality)
+```
+
+```{r data-structure}
+str(airquality)
+```
+
+## Check missing values
+
+```{r missing-values}
+colSums(is.na(airquality))
+```
+
+Some observations contain missing values. For the examples below, `aq` is a
+complete-case version of the dataset, created with `na.omit()`.
+
+```{r cleaned-data}
+dim(aq)
+summary(aq)
+```
+
+# Visualizations using ggplot2 geometries
+
+## 1. `geom_bar()` — Bar chart
+
+`geom_bar()` counts the number of observations in each category by default.
+Here, it shows how many daily records are available for each month.
+
+```{r geom-bar, fig.cap="Number of observations in each month."}
+ggplot(aq, aes(x = Month)) +
+  geom_bar(fill = "steelblue", color = "white") +
+  labs(
+    title = "Number of Observations per Month",
+    x = "Month",
+    y = "Number of observations"
+  ) +
+  theme_minimal()
+```
+
+**Interpretation:** Each bar represents the number of complete daily records
+for that month.
+
+## 2. `geom_boxplot()` — Boxplot
+
+`geom_boxplot()` summarizes the distribution of a numerical variable using
+the median, quartiles, whiskers, and potential outliers.
+
+```{r geom-boxplot, fig.cap="Distribution of ozone measurements by month."}
+ggplot(aq, aes(x = Month, y = Ozone)) +
+  geom_boxplot(fill = "orange", alpha = 0.75) +
+  labs(
+    title = "Ozone Distribution by Month",
+    x = "Month",
+    y = "Ozone concentration"
+  ) +
+  theme_minimal()
+```
+
+**Interpretation:** Compare the median ozone level, spread, and potential
+outliers across the months.
+
+## 3. `geom_density()` — Density plot
+
+`geom_density()` estimates and displays the distribution of a continuous
+numerical variable as a smooth curve.
+
+```{r geom-density, fig.cap="Estimated density distribution of ozone measurements."}
+ggplot(aq, aes(x = Ozone)) +
+  geom_density(fill = "lightblue", color = "steelblue", alpha = 0.7) +
+  labs(
+    title = "Density Distribution of Ozone",
+    x = "Ozone concentration",
+    y = "Density"
+  ) +
+  theme_minimal()
+```
+
+**Interpretation:** Higher parts of the curve indicate ozone values where
+observations are more concentrated.
+
+## 4. `geom_histogram()` — Histogram
+
+`geom_histogram()` divides a numerical variable into intervals (bins) and
+displays the number of observations in each interval.
+
+```{r geom-histogram, fig.cap="Frequency distribution of ozone measurements."}
+ggplot(aq, aes(x = Ozone)) +
+  geom_histogram(
+    bins = 15,
+    fill = "skyblue",
+    color = "white"
+  ) +
+  labs(
+    title = "Histogram of Ozone Levels",
+    x = "Ozone concentration",
+    y = "Frequency"
+  ) +
+  theme_minimal()
+```
+
+**Interpretation:** The bars show how frequently ozone measurements fall
+within each interval. Changing `bins` changes the number of intervals.
+
+## 5. `geom_hline()` — Horizontal reference line
+
+`geom_hline()` adds a horizontal line at a specified y-value. In this example,
+the line marks the mean ozone concentration.
+
+```{r geom-hline, fig.cap="Ozone and temperature with a horizontal mean reference line."}
+mean_ozone <- mean(aq$Ozone)
+
+ggplot(aq, aes(x = Temp, y = Ozone)) +
+  geom_point(alpha = 0.7) +
+  geom_hline(
+    yintercept = mean_ozone,
+    color = "red",
+    linewidth = 1,
+    linetype = "dashed"
+  ) +
+  labs(
+    title = "Ozone and Temperature",
+    subtitle = paste("Horizontal line = mean ozone:", round(mean_ozone, 1)),
+    x = "Temperature (F)",
+    y = "Ozone concentration"
+  ) +
+  theme_minimal()
+```
+
+**Interpretation:** Points above the line have ozone values greater than the
+dataset's mean; points below it have values lower than the mean.
+
+## 6. `geom_jitter()` — Jitter plot
+
+`geom_jitter()` adds a small amount of random displacement to points. This
+helps reveal observations that would otherwise overlap.
+
+```{r geom-jitter, fig.cap="Ozone measurements by month with jitter to reduce overlap."}
+ggplot(aq, aes(x = Month, y = Ozone)) +
+  geom_jitter(
+    color = "blue",
+    width = 0.18,
+    height = 0,
+    alpha = 0.65
+  ) +
+  labs(
+    title = "Ozone Measurements by Month",
+    x = "Month",
+    y = "Ozone concentration"
+  ) +
+  theme_minimal()
+```
+
+**Interpretation:** The horizontal jitter separates points visually. It does
+not change the original ozone measurements.
+
+## 7. `geom_line()` — Line graph
+
+`geom_line()` connects observations in x-axis order. Here, each month is
+displayed as a separate series of daily temperatures.
+
+```{r geom-line, fig.cap="Daily temperature observations, grouped by month."}
+ggplot(aq, aes(x = Day, y = Temp, color = Month, group = Month)) +
+  geom_line(linewidth = 0.9) +
+  labs(
+    title = "Daily Temperature by Month",
+    x = "Day of month",
+    y = "Temperature (F)",
+    color = "Month"
+  ) +
+  theme_minimal()
+```
+
+**Interpretation:** Each coloured line represents one month. The plot allows
+us to compare daily temperature patterns, although the same day number in
+different months does not represent the same date.
+
+## 8. `geom_point()` — Scatter plot
+
+`geom_point()` displays each observation as a point. It is commonly used to
+explore the relationship between two numerical variables.
+
+```{r geom-point, fig.cap="Relationship between temperature and ozone."}
+ggplot(aq, aes(x = Temp, y = Ozone)) +
+  geom_point(color = "darkgreen", size = 2.5, alpha = 0.7) +
+  labs(
+    title = "Relationship Between Temperature and Ozone",
+    x = "Temperature (F)",
+    y = "Ozone concentration"
+  ) +
+  theme_minimal()
+```
+
+**Interpretation:** Look for an overall pattern in the points. An upward
+pattern may suggest that higher temperatures are associated with higher
+ozone measurements; a scatter plot alone does not establish causation.
+
+## 9. `geom_rug()` — Rug plot
+
+`geom_rug()` adds small marks along the plot axes to show the locations of
+individual observations.
+
+```{r geom-rug, fig.cap="Scatter plot with rug marks along both axes."}
+ggplot(aq, aes(x = Temp, y = Ozone)) +
+  geom_point(alpha = 0.6) +
+  geom_rug(color = "red", alpha = 0.6) +
+  labs(
+    title = "Temperature and Ozone with Rug Marks",
+    x = "Temperature (F)",
+    y = "Ozone concentration"
+  ) +
+  theme_minimal()
+```
+
+**Interpretation:** The marks along the bottom and left edges show where
+observations occur on the temperature and ozone scales.
+
+## 10. `geom_smooth()` — Smoothed trend
+
+`geom_smooth()` adds an estimated trend line. The `loess` method is useful for
+showing a potentially nonlinear pattern in this dataset.
+
+```{r geom-smooth, fig.cap="Smoothed relationship between temperature and ozone."}
+ggplot(aq, aes(x = Temp, y = Ozone)) +
+  geom_point(alpha = 0.6) +
+  geom_smooth(
+    method = "loess",
+    color = "red",
+    se = TRUE
+  ) +
+  labs(
+    title = "Temperature and Ozone Trend",
+    x = "Temperature (F)",
+    y = "Ozone concentration"
+  ) +
+  theme_minimal()
+```
+
+**Interpretation:** The curve summarizes the estimated relationship. The
+shaded area is the confidence band around the fitted smooth.
+
+## 11. `geom_text()` — Text labels
+
+`geom_text()` places text at specified coordinates. This example adds an
+annotation to the scatter plot.
+
+```{r geom-text, fig.cap="Scatter plot with a text annotation."}
+ggplot(aq, aes(x = Temp, y = Ozone)) +
+  geom_point(alpha = 0.6) +
+  annotate(
+    "text",
+    x = 100,
+    y = 100,
+    label = "High ozone area",
+    color = "red",
+    size = 4
+  ) +
+  labs(
+    title = "Ozone Measurements with Text Annotation",
+    x = "Temperature (F)",
+    y = "Ozone concentration"
+  ) +
+  theme_minimal()
+```
+
+**Interpretation:** The annotation adds explanatory text at the chosen
+coordinates. Its position is illustrative and is not itself a data point.
+
+## 12. `geom_violin()` — Violin plot
+
+`geom_violin()` displays the distribution of a numerical variable across
+categories. The width of the violin represents the estimated data density.
+
+```{r geom-violin, fig.cap="Distribution of ozone measurements across months."}
+ggplot(aq, aes(x = Month, y = Ozone)) +
+  geom_violin(fill = "mediumpurple", alpha = 0.65, na.rm = TRUE) +
+  labs(
+    title = "Ozone Distribution Across Months",
+    x = "Month",
+    y = "Ozone concentration"
+  ) +
+  theme_minimal()
+```
+
+**Interpretation:** Wider sections indicate ozone values with a higher
+estimated concentration of observations. Compare the shapes across months.
+
+## 13. `geom_vline()` — Vertical reference line
+
+`geom_vline()` adds a vertical line at a specified x-value. Here, the line
+marks the mean temperature.
+
+```{r geom-vline, fig.cap="Ozone and temperature with a vertical mean reference line."}
+mean_temp <- mean(aq$Temp)
+
+ggplot(aq, aes(x = Temp, y = Ozone)) +
+  geom_point(alpha = 0.7) +
+  geom_vline(
+    xintercept = mean_temp,
+    color = "red",
+    linewidth = 1,
+    linetype = "dashed"
+  ) +
+  labs(
+    title = "Ozone and Temperature",
+    subtitle = paste("Vertical line = mean temperature:", round(mean_temp, 1), "F"),
+    x = "Temperature (F)",
+    y = "Ozone concentration"
+  ) +
+  theme_minimal()
+```
+
+**Interpretation:** Observations to the left of the line have temperatures
+below the mean; observations to the right have temperatures above the mean.
